@@ -1,0 +1,40 @@
+{
+  "name": "sql_ai_agent",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "db:generate": "dotenv -e .env.local -- drizzle-kit generate --config ./db/drizzle.config.ts",
+    "db:migrate": "dotenv -e .env.local -- drizzle-kit migrate --config ./db/drizzle.config.ts",
+    "db:push": "drizzle-kit push --config ./db/drizzle.config.ts",
+    "db:studio": "dotenv -e .env.local -- drizzle-kit studio --config ./db/drizzle.config.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/google": "^3.0.43",
+    "@ai-sdk/openai": "^3.0.41",
+    "@ai-sdk/react": "^3.0.118",
+    "@libsql/client": "^0.17.0",
+    "ai": "^6.0.116",
+    "dotenv": "^17.3.1",
+    "drizzle-orm": "^0.45.1",
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
+    "drizzle-kit": "^0.31.9",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

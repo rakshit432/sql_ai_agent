@@ -1,0 +1,8 @@
+﻿app/api/chat/route.ts(19,9): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '() => Promise<{ tables: never[]; }>' is not assignable to type 'undefined'.
+app/api/chat/route.ts(28,9): error TS2769: No overload matches this call.
+  The last overload gave the following error.
+    Type '({ query }: { query: any; }) => Promise<{ success: boolean; rows: Row[]; error?: undefined; } | { success: boolean; error: any; rows?: undefined; }>' is not assignable to type 'undefined'.
+app/api/chat/route.ts(28,27): error TS7031: Binding element 'query' implicitly has an 'any' type.
+app/api/chat/route.ts(38,5): error TS2353: Object literal may only specify known properties, and 'maxSteps' does not exist in type 'CallSettings & { system?: string | SystemModelMessage | SystemModelMessage[] | undefined; } & { messages: ModelMessage[]; prompt?: undefined; } & { ...; }'.
