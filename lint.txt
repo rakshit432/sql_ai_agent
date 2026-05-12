@@ -1,0 +1,27 @@
+﻿
+> sql_ai_agent@0.1.0 lint
+> eslint
+
+
+C:\Users\BIT\Desktop\sql_ai_agent\app\api\chat\route.ts
+    4:3   warning  'convertToModelMessages' is defined but never used  @typescript-eslint/no-unused-vars
+   23:19  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   59:18  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   79:20  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   90:18  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  102:45  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  102:75  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  158:19  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+C:\Users\BIT\Desktop\sql_ai_agent\app\page.tsx
+   91:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:92  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  178:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\BIT\Desktop\sql_ai_agent\scripts\push_turso_sql.js
+  2:12  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  3:14  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  4:26  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+Γ£û 14 problems (13 errors, 1 warning)
+

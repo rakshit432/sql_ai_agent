@@ -1,214 +1,214 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 
+// ================= TYPES =================
+type TextPart = {
+  type: 'text';
+  text: string;
+};
+
+type ToolPart = {
+  toolCallId: string;
+  tool?: string;
+  toolName?: string;
+  input?: Record<string, any>;
+  output?: any;
+  result?: any;
+};
+
+type MessagePart = TextPart | ToolPart;
+
+// ================= MAIN =================
 export default function Chat() {
   const [input, setInput] = useState('');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const { messages, sendMessage, error, isLoading } = useChat({
-    api: '/api/chat',
-  });
+  const { messages, sendMessage, error, status } = useChat();
 
-  // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-zinc-50">
-      
-      {/* HEADER */}
-      <header className="border-b border-zinc-800 bg-black/60 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-          <div>
-            <h1 className="text-lg font-semibold tracking-tight">
-              SQL AI Agent
-            </h1>
-            <p className="text-xs text-zinc-400">
-              Tool-powered AI · Natural language → SQL
-            </p>
-          </div>
-        </div>
-      </header>
+      <Header />
 
-      {/* MAIN */}
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-4">
+        <MessageList messages={messages} status={status} />
 
-        {/* CHAT BOX */}
-        <div className="mb-3 flex-1 overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4 shadow-lg">
-
-          {messages.length === 0 && (
-            <div className="flex h-full flex-col items-center justify-center text-center text-sm text-zinc-500">
-              <p className="mb-2 font-medium text-zinc-300">
-                Start chatting with your AI Database Agent
-              </p>
-              <p className="text-xs">
-                Ask anything about your database in plain English.
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-4">
-
-            {messages.map(message => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.role === 'user'
-                    ? 'justify-end'
-                    : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
-                    message.role === 'user'
-                      ? 'bg-emerald-500 text-emerald-50'
-                      : 'bg-zinc-900 text-zinc-100 border border-zinc-800'
-                  }`}
-                >
-                  {/* ROLE */}
-                  <div className="mb-1 text-[10px] font-medium uppercase tracking-wide opacity-75">
-                    {message.role === 'user' ? 'You' : 'AI'}
-                  </div>
-
-                  {/* MESSAGE PARTS */}
-                  {message.parts?.map((part, i) => {
-
-                    // 🧠 FINAL TEXT RESPONSE
-                    if (part.type === 'text') {
-                      return (
-                        <p
-                          key={i}
-                          className="whitespace-pre-wrap leading-relaxed"
-                        >
-                          {part.text || '⚠️ No response generated'}
-                        </p>
-                      );
-                    }
-
-                    // ⚡ TOOL CALL + RESULT
-                    if (part.type === 'tool-invocation') {
-                      return (
-                        <div
-                          key={i}
-                          className="mt-3 rounded-xl border border-yellow-500/30 bg-yellow-900/20 p-3 text-xs"
-                        >
-                          <p className="font-semibold text-yellow-300">
-                            ⚡ Tool: {part.toolName}
-                          </p>
-
-                          {/* ARGS */}
-                          <pre className="mt-2 overflow-x-auto text-[10px] text-yellow-200">
-                            {JSON.stringify(part.args, null, 2)}
-                          </pre>
-
-                          {/* RESULT */}
-                          {part.result && (
-                            <div className="mt-2">
-                              <p className="text-[10px] text-green-400">
-                                Result:
-                              </p>
-
-                              {/* 🔥 TABLE RENDER */}
-                              {Array.isArray(part.result.rows) ? (
-                                <div className="overflow-x-auto mt-1">
-                                  <table className="text-[10px] border border-zinc-700">
-                                    <thead>
-                                      <tr>
-                                        {Object.keys(part.result.rows[0] || {}).map(col => (
-                                          <th key={col} className="px-2 py-1 border">
-                                            {col}
-                                          </th>
-                                        ))}
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {part.result.rows.map((row, idx) => (
-                                        <tr key={idx}>
-                                          {Object.values(row).map((val, i) => (
-                                            <td key={i} className="px-2 py-1 border">
-                                              {String(val)}
-                                            </td>
-                                          ))}
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              ) : (
-                                <pre className="text-green-300">
-                                  {JSON.stringify(part.result, null, 2)}
-                                </pre>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    }
-
-                    return null;
-                  })}
-                </div>
-              </div>
-            ))}
-
-            {/* LOADING */}
-            {isLoading && (
-              <div className="text-xs text-zinc-500">
-                AI is thinking...
-              </div>
-            )}
-
-            {/* DEBUG */}
-            {!isLoading && messages.length > 0 && (
-              <p className="text-[10px] text-zinc-500">
-                Debug: last message has {messages[messages.length - 1]?.parts?.length || 0} parts
-              </p>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* ERROR */}
         {error && (
           <div className="mb-2 rounded-xl border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200">
-            <span className="font-semibold">Error: </span>
-            {String((error as any).message ?? error.toString())}
+            {String(error)}
           </div>
         )}
 
-        {/* INPUT */}
-        <form
-          onSubmit={e => {
-            e.preventDefault();
-            if (!input.trim()) return;
-
-            sendMessage({ text: input });
-            setInput('');
-          }}
-          className="sticky bottom-0 mt-2 w-full"
-        >
-          <div className="flex items-center gap-2 rounded-2xl border border-zinc-800 bg-zinc-950/80 px-3 py-2 shadow-xl">
-            <input
-              className="flex-1 bg-transparent text-sm text-zinc-50 placeholder:text-zinc-500 focus:outline-none"
-              value={input}
-              placeholder="e.g. Show all products or sales by region..."
-              onChange={e => setInput(e.currentTarget.value)}
-            />
-
-            <button
-              type="submit"
-              disabled={!input.trim()}
-              className="inline-flex items-center gap-1 rounded-xl bg-emerald-500 px-3 py-1.5 text-xs font-medium text-emerald-50 shadow-sm transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Send
-            </button>
-          </div>
-        </form>
+        <ChatInput
+          input={input}
+          setInput={setInput}
+          sendMessage={sendMessage}
+        />
       </main>
+    </div>
+  );
+}
+
+// ================= HEADER =================
+function Header() {
+  return (
+    <header className="border-b border-zinc-800 bg-black/60 backdrop-blur">
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
+        <div>
+          <h1 className="text-lg font-semibold">SQL AI Agent</h1>
+          <p className="text-xs text-zinc-400">
+            Natural language → SQL
+          </p>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// ================= MESSAGE LIST =================
+function MessageList({ messages, status }: any) {
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  return (
+    <div className="mb-3 flex-1 overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
+      {messages.length === 0 && (
+        <EmptyState />
+      )}
+
+      <div className="space-y-4">
+        {messages.map((message: any) => (
+          <MessageBubble key={message.id} message={message} />
+        ))}
+
+        {(status === 'submitted' || status === 'streaming') && (
+          <TypingIndicator />
+        )}
+
+        <div ref={messagesEndRef} />
+      </div>
+    </div>
+  );
+}
+
+// ================= EMPTY =================
+function EmptyState() {
+  return (
+    <div className="flex h-full flex-col items-center justify-center text-sm text-zinc-500">
+      <p className="text-zinc-300">Start chatting with AI</p>
+    </div>
+  );
+}
+
+// ================= BUBBLE =================
+function MessageBubble({ message }: any) {
+  const parts: MessagePart[] = useMemo(() => {
+    return (
+      message.parts || [
+        ...(message.content
+          ? [{ type: 'text', text: message.content }]
+          : []),
+        ...(message.toolInvocations || []),
+      ]
+    );
+  }, [message]);
+
+  return (
+    <div
+      className={`flex ${
+        message.role === 'user' ? 'justify-end' : 'justify-start'
+      }`}
+    >
+      <div className="max-w-[80%] rounded-2xl px-3 py-2 text-sm bg-zinc-900">
+        {parts.map((part, i) => {
+          if (part.type === 'text') {
+            return <p key={i}>{part.text}</p>;
+          }
+
+          if ('toolCallId' in part) {
+            const toolName = part.toolName ?? part.tool ?? 'unknown';
+
+            if (toolName === 'queryDatabase') {
+              return <QueryCard key={i} part={part} />;
+            }
+          }
+
+          return null;
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ================= QUERY CARD =================
+function QueryCard({ part }: { part: ToolPart }) {
+  const query = part.input?.query || '';
+  const output = part.output || part.result;
+
+  return (
+    <div className="mt-3 rounded-xl border border-zinc-700 p-3">
+      <div className="flex justify-between items-center">
+        <span className="text-xs text-zinc-400">SQL Query</span>
+        <button
+          onClick={() => navigator.clipboard.writeText(query)}
+          className="text-xs text-emerald-400"
+        >
+          Copy
+        </button>
+      </div>
+
+      <pre className="text-xs text-blue-300 mt-2">{query}</pre>
+
+      {Array.isArray(output?.rows) && (
+        <div className="mt-2 text-xs text-zinc-400">
+          {output.rows.length} rows returned
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ================= INPUT =================
+function ChatInput({ input, setInput, sendMessage }: any) {
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!input.trim()) return;
+
+        sendMessage({ text: input });
+        setInput('');
+      }}
+      className="mt-2"
+    >
+      <div className="flex gap-2 border border-zinc-800 rounded-xl px-3 py-2">
+        <input
+          className="flex-1 bg-transparent outline-none"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+        />
+
+        <button className="bg-emerald-500 px-3 py-1 text-xs rounded">
+          Send
+        </button>
+      </div>
+    </form>
+  );
+}
+
+// ================= TYPING =================
+function TypingIndicator() {
+  return (
+    <div className="text-xs text-zinc-400 animate-pulse">
+      AI is thinking...
     </div>
   );
 }

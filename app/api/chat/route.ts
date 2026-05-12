@@ -2,30 +2,13 @@ import {
   streamText,
   tool,
   convertToModelMessages,
+  stepCountIs
 } from 'ai';
 import { google } from '@ai-sdk/google';
 import { z } from 'zod';
 import { db } from '@/db/db.config';
 
-// 🧠 SYSTEM PROMPT
-const SYSTEM_PROMPT = `
-You are an AI SQL agent.
-
-You MUST follow this reasoning loop:
-
-1. Analyze user query
-2. Call getDatabaseSchema
-3. Generate SQL query
-4. Call queryDatabase
-5. AFTER receiving results:
-   - Analyze them
-   - Explain clearly to the user
-
-STRICT:
-- Tool output is NOT final answer
-- ALWAYS generate final explanation
-- NEVER stop after tool execution
-`;
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -34,145 +17,152 @@ export async function POST(req: Request) {
     console.log('==============================');
 
     const body = await req.json();
-    console.log('📩 USER:', JSON.stringify(body.messages, null, 2));
+    const messages = body.messages;
 
-    let step = 1;
-    let lastRows: any[] = [];
+    console.log('📩 USER:', JSON.stringify(messages, null, 2));
 
+    let lastRows: Record<string, unknown>[] = [];
+    let step = 0;
+
+    // 🔥 PHASE 1: TOOL EXECUTION
     const result = streamText({
       model: google('gemini-2.5-flash'),
-      messages: await convertToModelMessages(body.messages),
-      system: SYSTEM_PROMPT,
-      maxSteps: 8,
+
+      messages: await convertToModelMessages(messages),
+
+      system: `You are an AI SQL agent.
+
+Your ONLY job:
+1. Call getDatabaseSchema
+2. Generate SQL
+3. Call queryDatabase
+
+DO NOT explain results.
+`,
+      stopWhen: stepCountIs(5),
 
       tools: {
         // 🔍 SCHEMA TOOL
         getDatabaseSchema: tool({
           description: 'Get DB schema',
-          parameters: z.object({}),
-          execute: async () => {
+          inputSchema: z.object({}),
+          execute: async ({}) => {
             console.log(`\n📊 STEP ${++step}: SCHEMA`);
 
+            const schemaResult = await db.execute(`
+              SELECT name, sql FROM sqlite_master 
+              WHERE type='table' AND name NOT LIKE 'sqlite_%';
+            `);
+
+            console.log('📊 SCHEMA FETCHED');
+
             return {
-              tables: [
-                {
-                  name: 'products',
-                  columns: [
-                    'id',
-                    'name',
-                    'category',
-                    'price',
-                    'stock',
-                    'created_at',
-                  ],
-                },
-                {
-                  name: 'sales',
-                  columns: [
-                    'id',
-                    'product_id',
-                    'quantity',
-                    'total_amount',
-                    'sale_date',
-                    'customer_name',
-                    'region',
-                  ],
-                  relationships: ['product_id → products.id'],
-                },
-              ],
+              schema: schemaResult.rows,
             };
           },
         }),
 
         // ⚡ QUERY TOOL
         queryDatabase: tool({
-          description: 'Execute SQL query',
-          parameters: z.object({
+          description: 'Execute SELECT query',
+          inputSchema: z.object({
             query: z.string(),
           }),
-
-          execute: async ({ query }) => {
+          execute: async ({ query }: { query: string }) => {
             console.log(`\n🧾 STEP ${++step}: QUERY`);
             console.log('🧾 SQL:', query);
 
-            try {
-              if (!query.toLowerCase().startsWith('select')) {
-                return {
-                  success: false,
-                  error: 'Only SELECT allowed',
-                };
-              }
+            if (!query.trim().toUpperCase().startsWith('SELECT')) {
+              console.log('❌ BLOCKED NON-SELECT');
 
-              const res = await db.execute(query);
-
-              lastRows = res.rows; // 🔥 STORE FOR SECOND PASS
-
-              console.log('✅ QUERY SUCCESS');
-              console.log('📦 ROWS:', JSON.stringify(res.rows, null, 2));
-
-              return {
-                success: true,
-                rows: res.rows,
-                count: res.rows.length,
-              };
-            } catch (err: any) {
               return {
                 success: false,
-                error: err.message,
+                error: 'Only SELECT queries allowed',
               };
             }
+
+            const res = await db.execute(query);
+
+            console.log('✅ QUERY SUCCESS');
+            console.log('📦 ROW COUNT:', res.rows.length);
+
+            return {
+              success: true,
+              rows: res.rows,
+            };
           },
         }),
       },
 
-      onFinish: (event) => {
-        console.log(`\n🧠 STEP ${++step}: FINAL RESPONSE`);
+      // 🔥 CAPTURE TOOL OUTPUT RELIABLY
+      onStepFinish: (event) => {
+        if (event.toolResults) {
+          for (const toolResult of event.toolResults) {
+            if (toolResult.toolName === 'queryDatabase') {
+              console.log('🔥 TOOL RESULT CAPTURED');
 
-        if (!event.text || event.text.trim() === '') {
-          console.log('⚠️ NO FINAL RESPONSE FROM LLM');
-        } else {
-          console.log('✅ FINAL RESPONSE:');
-          console.log(event.text);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const result = (toolResult as any).result || (toolResult as any).output;
+
+              if (result?.rows) {
+                lastRows = result.rows;
+                console.log('📦 CAPTURED ROWS:', lastRows.length);
+              }
+            }
+          }
         }
-
-        console.log('==============================\n');
       },
     });
 
-    // 🔥 CHECK IF LLM FAILED TO RESPOND
-    const text = await result.text;
+    // 🔥 WAIT FOR TOOL EXECUTION TO COMPLETE
+    await result.text;
 
-    if (!text || text.trim() === '') {
-      console.log('🔁 SECOND PASS TRIGGERED');
+    console.log('\n📦 FINAL DATA:', lastRows);
 
-      // 👉 SECOND PASS (LLM EXPLAINS RESULT)
-      const explanation = streamText({
+    // 🚨 SAFETY CHECK
+    if (!lastRows || lastRows.length === 0) {
+      console.log('⚠️ NO DATA FOUND');
+
+      return streamText({
         model: google('gemini-2.5-flash'),
         messages: [
           {
             role: 'user',
-            content: `
-The SQL query has already been executed.
-
-Here is the result:
-${JSON.stringify(lastRows, null, 2)}
-
-Now explain this result clearly in natural language.
-            `,
+            content: `The query returned no results. Inform the user clearly.`,
           },
         ],
-      });
-
-      return explanation.toUIMessageStreamResponse();
+      }).toUIMessageStreamResponse();
     }
 
-    return result.toUIMessageStreamResponse();
+    // 🔥 PHASE 2: LLM EXPLANATION
+    console.log('\n🧠 GENERATING FINAL RESPONSE...\n');
 
-  } catch (error: any) {
-    console.error('🔥 API ERROR:', error.message);
+    const explanation = streamText({
+      model: google('gemini-2.5-flash'),
+
+      messages: [
+        {
+          role: 'user',
+          content: `
+User question:
+${messages[messages.length - 1].content}
+
+Database result:
+${JSON.stringify(lastRows, null, 2)}
+
+Explain this clearly and concisely to the user.
+`,
+        },
+      ],
+    });
+
+    return explanation.toUIMessageStreamResponse();
+
+  } catch (error: unknown) {
+    console.error('🔥 API ERROR:', error);
 
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
       { status: 500 }
     );
   }
