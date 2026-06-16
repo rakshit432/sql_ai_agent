@@ -1,214 +1,121 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { DefaultChatTransport } from 'ai';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Background } from '@/app/components/Background';
+import { ChatHeader } from '@/app/components/ChatHeader';
+import { ChatInput } from '@/app/components/ChatInput';
+import { ChatMessage } from '@/app/components/ChatMessage';
+import { SchemaSidebar } from '@/app/components/SchemaSidebar';
+import { WelcomeScreen } from '@/app/components/WelcomeScreen';
+import { AlertTriangle } from 'lucide-react';
 
-// ================= TYPES =================
-type TextPart = {
-  type: 'text';
-  text: string;
-};
-
-type ToolPart = {
-  toolCallId: string;
-  tool?: string;
-  toolName?: string;
-  input?: Record<string, any>;
-  output?: any;
-  result?: any;
-};
-
-type MessagePart = TextPart | ToolPart;
-
-// ================= MAIN =================
-export default function Chat() {
+export default function Home() {
   const [input, setInput] = useState('');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  const { messages, sendMessage, error, status, setMessages, stop } = useChat({
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
+  });
+
+  const isLoading = status === 'submitted' || status === 'streaming';
+
+  const mainRef = useRef<HTMLElement>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  const { messages, sendMessage, error, status } = useChat();
+  const scrollToBottom = useCallback((smooth = true) => {
+    messagesEndRef.current?.scrollIntoView({ behavior: smooth ? 'smooth' : 'instant' });
+  }, []);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-b from-zinc-950 via-zinc-900 to-black text-zinc-50">
-      <Header />
-
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-4">
-        <MessageList messages={messages} status={status} />
-
-        {error && (
-          <div className="mb-2 rounded-xl border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs text-red-200">
-            {String(error)}
-          </div>
-        )}
-
-        <ChatInput
-          input={input}
-          setInput={setInput}
-          sendMessage={sendMessage}
-        />
-      </main>
-    </div>
-  );
-}
-
-// ================= HEADER =================
-function Header() {
-  return (
-    <header className="border-b border-zinc-800 bg-black/60 backdrop-blur">
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4">
-        <div>
-          <h1 className="text-lg font-semibold">SQL AI Agent</h1>
-          <p className="text-xs text-zinc-400">
-            Natural language → SQL
-          </p>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-// ================= MESSAGE LIST =================
-function MessageList({ messages, status }: any) {
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+    scrollToBottom();
+  }, [messages, isLoading, scrollToBottom]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const main = mainRef.current;
+    if (!main) return;
+
+    const handleScroll = () => {
+      const distanceFromBottom = main.scrollHeight - main.scrollTop - main.clientHeight;
+      setShowScrollButton(distanceFromBottom > 200);
+    };
+
+    main.addEventListener('scroll', handleScroll);
+    return () => main.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim() || isLoading) return;
+    sendMessage({ text: input });
+    setInput('');
+  };
+
+  const handleSuggestion = (query: string) => {
+    if (isLoading) return;
+    sendMessage({ text: query });
+  };
+
+  const handleNewChat = () => {
+    if (isLoading) stop();
+    setMessages([]);
+    setInput('');
+  };
 
   return (
-    <div className="mb-3 flex-1 overflow-y-auto rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-      {messages.length === 0 && (
-        <EmptyState />
-      )}
+    <div className="relative flex h-screen overflow-hidden bg-[#030303] text-zinc-50 selection:bg-indigo-500/30">
+      <Background />
 
-      <div className="space-y-4">
-        {messages.map((message: any) => (
-          <MessageBubble key={message.id} message={message} />
-        ))}
+      <div className="relative z-10 flex h-full w-full">
+        <SchemaSidebar open={sidebarOpen} onToggle={() => setSidebarOpen((v) => !v)} />
 
-        {(status === 'submitted' || status === 'streaming') && (
-          <TypingIndicator />
-        )}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <ChatHeader
+            messageCount={messages.length}
+            status={status}
+            onNewChat={handleNewChat}
+            canNewChat={messages.length > 0 || isLoading}
+          />
 
-        <div ref={messagesEndRef} />
-      </div>
-    </div>
-  );
-}
+          <main ref={mainRef} className="flex-1 overflow-y-auto scroll-smooth px-4 py-6 sm:px-6">
+            <div className="mx-auto flex min-h-full max-w-3xl flex-col">
+              {messages.length === 0 ? (
+                <WelcomeScreen onSuggestionClick={handleSuggestion} disabled={isLoading} />
+              ) : (
+                <div className="flex flex-col">
+                  {messages.map((m, i) => (
+                    <ChatMessage key={m.id} message={m} index={i} />
+                  ))}
+                </div>
+              )}
 
-// ================= EMPTY =================
-function EmptyState() {
-  return (
-    <div className="flex h-full flex-col items-center justify-center text-sm text-zinc-500">
-      <p className="text-zinc-300">Start chatting with AI</p>
-    </div>
-  );
-}
+              {error && (
+                <div className="my-4 flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-200 backdrop-blur-sm">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
+                  <div>
+                    <p className="font-semibold text-red-300">Something went wrong</p>
+                    <p className="mt-1 text-red-200/80">{error.message}</p>
+                  </div>
+                </div>
+              )}
 
-// ================= BUBBLE =================
-function MessageBubble({ message }: any) {
-  const parts: MessagePart[] = useMemo(() => {
-    return (
-      message.parts || [
-        ...(message.content
-          ? [{ type: 'text', text: message.content }]
-          : []),
-        ...(message.toolInvocations || []),
-      ]
-    );
-  }, [message]);
+              <div ref={messagesEndRef} className="h-4" />
+            </div>
+          </main>
 
-  return (
-    <div
-      className={`flex ${
-        message.role === 'user' ? 'justify-end' : 'justify-start'
-      }`}
-    >
-      <div className="max-w-[80%] rounded-2xl px-3 py-2 text-sm bg-zinc-900">
-        {parts.map((part, i) => {
-          if (part.type === 'text') {
-            return <p key={i}>{part.text}</p>;
-          }
-
-          if ('toolCallId' in part) {
-            const toolName = part.toolName ?? part.tool ?? 'unknown';
-
-            if (toolName === 'queryDatabase') {
-              return <QueryCard key={i} part={part} />;
-            }
-          }
-
-          return null;
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ================= QUERY CARD =================
-function QueryCard({ part }: { part: ToolPart }) {
-  const query = part.input?.query || '';
-  const output = part.output || part.result;
-
-  return (
-    <div className="mt-3 rounded-xl border border-zinc-700 p-3">
-      <div className="flex justify-between items-center">
-        <span className="text-xs text-zinc-400">SQL Query</span>
-        <button
-          onClick={() => navigator.clipboard.writeText(query)}
-          className="text-xs text-emerald-400"
-        >
-          Copy
-        </button>
-      </div>
-
-      <pre className="text-xs text-blue-300 mt-2">{query}</pre>
-
-      {Array.isArray(output?.rows) && (
-        <div className="mt-2 text-xs text-zinc-400">
-          {output.rows.length} rows returned
+          <ChatInput
+            input={input}
+            setInput={setInput}
+            onSubmit={handleSubmit}
+            isLoading={isLoading}
+            onStop={stop}
+            showScrollButton={showScrollButton && messages.length > 0}
+            onScrollToBottom={() => scrollToBottom()}
+          />
         </div>
-      )}
-    </div>
-  );
-}
-
-// ================= INPUT =================
-function ChatInput({ input, setInput, sendMessage }: any) {
-  return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!input.trim()) return;
-
-        sendMessage({ text: input });
-        setInput('');
-      }}
-      className="mt-2"
-    >
-      <div className="flex gap-2 border border-zinc-800 rounded-xl px-3 py-2">
-        <input
-          className="flex-1 bg-transparent outline-none"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-        />
-
-        <button className="bg-emerald-500 px-3 py-1 text-xs rounded">
-          Send
-        </button>
       </div>
-    </form>
-  );
-}
-
-// ================= TYPING =================
-function TypingIndicator() {
-  return (
-    <div className="text-xs text-zinc-400 animate-pulse">
-      AI is thinking...
     </div>
   );
 }

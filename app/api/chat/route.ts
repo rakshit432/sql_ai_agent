@@ -1,169 +1,108 @@
-import {
-  streamText,
-  tool,
-  convertToModelMessages,
-  stepCountIs
-} from 'ai';
+import { streamText, tool, convertToModelMessages, stepCountIs } from 'ai';
 import { google } from '@ai-sdk/google';
 import { z } from 'zod';
 import { db } from '@/db/db.config';
 
-export const maxDuration = 60;
+const SYSTEM_PROMPT = `
+You are an expert AI SQL Database Agent.
+
+Your workflow MUST follow these steps in order:
+1. Identify what data the user is asking for.
+2. IMMEDIATELY call \`getDatabaseSchema\` to understand the exact tables and columns. Never skip this.
+3. After receiving the schema, write a SQLite SELECT query using ONLY the real table/column names from the schema.
+4. Call \`queryDatabase\` with your query.
+5. After receiving the results, write a clear, insightful explanation for the user summarizing what the data shows.
+
+STRICT Rules:
+- NEVER guess table or column names. Always call getDatabaseSchema first.
+- Do NOT call both tools at the same time. Schema first, then query.
+- Do NOT write any text between tool calls — only write your final response after getting query results.
+- Only SELECT queries are allowed. Never mutate data.
+- If a query fails, analyze the error, fix the SQL, and retry.
+`;
 
 export async function POST(req: Request) {
   try {
-    console.log('\n==============================');
-    console.log('🚀 NEW REQUEST');
-    console.log('==============================');
+    const { messages } = await req.json();
 
-    const body = await req.json();
-    const messages = body.messages;
-
-    console.log('📩 USER:', JSON.stringify(messages, null, 2));
-
-    let lastRows: Record<string, unknown>[] = [];
     let step = 0;
 
-    // 🔥 PHASE 1: TOOL EXECUTION
     const result = streamText({
       model: google('gemini-2.5-flash'),
-
+      system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
-
-      system: `You are an AI SQL agent.
-
-Your ONLY job:
-1. Call getDatabaseSchema
-2. Generate SQL
-3. Call queryDatabase
-
-DO NOT explain results.
-`,
-      stopWhen: stepCountIs(5),
-
+      stopWhen: stepCountIs(10),
       tools: {
-        // 🔍 SCHEMA TOOL
         getDatabaseSchema: tool({
-          description: 'Get DB schema',
-          inputSchema: z.object({}),
-          execute: async ({}) => {
-            console.log(`\n📊 STEP ${++step}: SCHEMA`);
+          description: 'Fetch the real database schema: table names and their SQL definitions.',
+          inputSchema: z.object({
+            reason: z.string().optional().describe('Why you need the schema'),
+          }),
+          execute: async () => {
+            console.log(`\n📊 STEP ${++step}: DYNAMIC SCHEMA FETCH`);
+            try {
+              const res = await db.execute(`
+                SELECT name, sql 
+                FROM sqlite_master 
+                WHERE type='table' 
+                  AND name NOT LIKE 'sqlite_%' 
+                  AND name NOT LIKE '__drizzle%'
+              `);
 
-            const schemaResult = await db.execute(`
-              SELECT name, sql FROM sqlite_master 
-              WHERE type='table' AND name NOT LIKE 'sqlite_%';
-            `);
+              const schema = res.rows.map((row: Record<string, unknown>) => ({
+                tableName: row.name,
+                definition: row.sql,
+              }));
 
-            console.log('📊 SCHEMA FETCHED');
-
-            return {
-              schema: schemaResult.rows,
-            };
+              console.log(`✅ SCHEMA FETCHED — ${schema.length} tables found`);
+              return { success: true, schema };
+            } catch (err: unknown) {
+              const message = err instanceof Error ? err.message : 'Unknown schema error';
+              console.error('🔥 SCHEMA ERROR:', message);
+              return { success: false, error: message };
+            }
           },
         }),
 
-        // ⚡ QUERY TOOL
         queryDatabase: tool({
-          description: 'Execute SELECT query',
+          description: 'Execute a read-only SQL SELECT query against the database.',
           inputSchema: z.object({
-            query: z.string(),
+            query: z.string().describe('A valid SQLite SELECT statement.'),
           }),
-          execute: async ({ query }: { query: string }) => {
-            console.log(`\n🧾 STEP ${++step}: QUERY`);
+          execute: async ({ query }) => {
+            console.log(`\n🧾 STEP ${++step}: EXECUTE QUERY`);
             console.log('🧾 SQL:', query);
 
-            if (!query.trim().toUpperCase().startsWith('SELECT')) {
-              console.log('❌ BLOCKED NON-SELECT');
-
-              return {
-                success: false,
-                error: 'Only SELECT queries allowed',
-              };
+            if (!query.trim().toLowerCase().startsWith('select')) {
+              return { success: false, error: 'Only SELECT queries are permitted.' };
             }
 
-            const res = await db.execute(query);
-
-            console.log('✅ QUERY SUCCESS');
-            console.log('📦 ROW COUNT:', res.rows.length);
-
-            return {
-              success: true,
-              rows: res.rows,
-            };
+            try {
+              const res = await db.execute(query);
+              console.log(`✅ QUERY SUCCESS — ${res.rows.length} rows returned`);
+              return {
+                success: true,
+                count: res.rows.length,
+                rows: res.rows,
+              };
+            } catch (err: unknown) {
+              const message = err instanceof Error ? err.message : 'Unknown query error';
+              console.error('🔥 QUERY ERROR:', message);
+              return { success: false, error: `SQL Error: ${message}` };
+            }
           },
         }),
       },
 
-      // 🔥 CAPTURE TOOL OUTPUT RELIABLY
-      onStepFinish: (event) => {
-        if (event.toolResults) {
-          for (const toolResult of event.toolResults) {
-            if (toolResult.toolName === 'queryDatabase') {
-              console.log('🔥 TOOL RESULT CAPTURED');
-
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const result = (toolResult as any).result || (toolResult as any).output;
-
-              if (result?.rows) {
-                lastRows = result.rows;
-                console.log('📦 CAPTURED ROWS:', lastRows.length);
-              }
-            }
-          }
-        }
+      onFinish: () => {
+        console.log(`\n✅ STEP ${++step}: RESPONSE COMPLETE`);
       },
     });
 
-    // 🔥 WAIT FOR TOOL EXECUTION TO COMPLETE
-    await result.text;
-
-    console.log('\n📦 FINAL DATA:', lastRows);
-
-    // 🚨 SAFETY CHECK
-    if (!lastRows || lastRows.length === 0) {
-      console.log('⚠️ NO DATA FOUND');
-
-      return streamText({
-        model: google('gemini-2.5-flash'),
-        messages: [
-          {
-            role: 'user',
-            content: `The query returned no results. Inform the user clearly.`,
-          },
-        ],
-      }).toUIMessageStreamResponse();
-    }
-
-    // 🔥 PHASE 2: LLM EXPLANATION
-    console.log('\n🧠 GENERATING FINAL RESPONSE...\n');
-
-    const explanation = streamText({
-      model: google('gemini-2.5-flash'),
-
-      messages: [
-        {
-          role: 'user',
-          content: `
-User question:
-${messages[messages.length - 1].content}
-
-Database result:
-${JSON.stringify(lastRows, null, 2)}
-
-Explain this clearly and concisely to the user.
-`,
-        },
-      ],
-    });
-
-    return explanation.toUIMessageStreamResponse();
-
+    return result.toUIMessageStreamResponse();
   } catch (error: unknown) {
-    console.error('🔥 API ERROR:', error);
-
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : String(error) }),
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Unknown API error';
+    console.error('🔥 API ERROR:', message);
+    return new Response(JSON.stringify({ error: message }), { status: 500 });
   }
 }
