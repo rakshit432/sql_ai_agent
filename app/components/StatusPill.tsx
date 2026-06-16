@@ -17,7 +17,7 @@ export function StatusPill({ status }: { status: ChatStatus }) {
   const Icon = config.icon;
 
   return (
-    <div className="flex items-center gap-2 rounded-full glass-panel px-3 py-1.5 text-xs font-medium">
+    <div className="flex items-center gap-2 rounded-full glass-panel-premium px-3 py-1.5 text-xs font-medium">
       <span className="relative flex h-2 w-2">
         {config.pulse && (
           <span

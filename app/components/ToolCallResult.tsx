@@ -77,9 +77,9 @@ export function ToolCallResult({ toolPart }: { toolPart: any }) {
   } else if (isQueryTool) {
     Icon = Search;
     label = isPending ? 'Running SQL...' : 'Query executed';
-    color = 'text-violet-400';
-    bg = 'bg-violet-500/10';
-    accentBorder = 'border-violet-500/20';
+    color = 'text-rose-400';
+    bg = 'bg-rose-500/10';
+    accentBorder = 'border-rose-500/20';
   }
 
   const handleCopySql = async () => {
@@ -104,42 +104,42 @@ export function ToolCallResult({ toolPart }: { toolPart: any }) {
   return (
     <div
       className={cn(
-        'my-3 overflow-hidden rounded-xl border bg-black/40 shadow-sm transition-all',
+        'my-4 overflow-hidden rounded-2xl border bg-zinc-950/40 shadow-lg transition-all duration-300',
         accentBorder,
-        !isPending && 'hover:border-white/15'
+        !isPending && 'hover:border-white/10 hover:shadow-xl'
       )}
     >
       <button
         onClick={() => !isPending && setExpanded(!expanded)}
         className={cn(
-          'flex w-full items-center justify-between p-3 text-left transition-colors',
+          'flex w-full items-center justify-between p-3.5 text-left transition-colors',
           bg,
-          !isPending && 'cursor-pointer hover:bg-white/5'
+          !isPending && 'cursor-pointer hover:bg-white/[0.03]'
         )}
       >
         <div className="flex items-center gap-3">
           <div
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-lg border border-white/5 bg-black/50',
+              'flex h-9 w-9 items-center justify-center rounded-xl border border-white/5 bg-black/40 shadow-md',
               color
             )}
           >
             {isPending ? (
-              <span className="relative flex h-3 w-3">
+              <span className="relative flex h-3.5 w-3.5">
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75" />
-                <span className="relative inline-flex h-3 w-3 rounded-full bg-current" />
+                <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-current" />
               </span>
             ) : (
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4.5 w-4.5" />
             )}
           </div>
           <div>
-            <p className={cn('text-sm font-semibold', color)}>{label}</p>
+            <p className={cn('text-xs font-bold uppercase tracking-wider', color)}>{label}</p>
             {!isPending && result && (
-              <p className="mt-0.5 text-xs text-zinc-500">
+              <p className="mt-0.5 text-[11px] font-medium text-zinc-500">
                 {isQueryTool && result.success && `${result.count} row${result.count !== 1 ? 's' : ''} returned`}
                 {isSchemaTool && result.success && `${result.schema?.length || 0} tables found`}
-                {!result.success && <span className="text-red-400">Failed</span>}
+                {!result.success && <span className="text-red-400 font-bold uppercase tracking-wide">Failed</span>}
               </p>
             )}
           </div>
@@ -148,25 +148,25 @@ export function ToolCallResult({ toolPart }: { toolPart: any }) {
         {!isPending && (
           <ChevronRight
             className={cn(
-              'h-4 w-4 text-zinc-500 transition-transform duration-200',
-              expanded && 'rotate-90'
+              'h-4 w-4 text-zinc-500 transition-transform duration-300',
+              expanded && 'rotate-90 text-rose-400'
             )}
           />
         )}
       </button>
 
       {expanded && !isPending && result && (
-        <div className="border-t border-white/5 bg-zinc-950/80 p-4">
+        <div className="border-t border-white/5 bg-zinc-950/90 p-4 space-y-4">
           {isQueryTool && sqlQuery && (
-            <div className="relative mb-4">
-              <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">
-                  SQL
+            <div className="relative">
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">
+                  SQL Pipeline Code
                 </span>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={handleCopySql}
-                    className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-300"
+                    className="flex items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 py-1 text-[10px] text-zinc-400 font-semibold tracking-wide transition-all hover:border-rose-500/20 hover:text-white"
                   >
                     {copied ? (
                       <Check className="h-3 w-3 text-emerald-400" />
@@ -178,15 +178,15 @@ export function ToolCallResult({ toolPart }: { toolPart: any }) {
                   {result.rows && result.rows.length > 0 && (
                     <button
                       onClick={handleExportCsv}
-                      className="flex items-center gap-1 rounded-md px-2 py-1 text-[10px] text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-300"
+                      className="flex items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 py-1 text-[10px] text-zinc-400 font-semibold tracking-wide transition-all hover:border-rose-500/20 hover:text-white"
                     >
                       <Download className="h-3 w-3" />
-                      CSV
+                      Export CSV
                     </button>
                   )}
                 </div>
               </div>
-              <pre className="overflow-x-auto rounded-lg border border-violet-500/20 bg-black/60 p-3 font-mono text-xs leading-relaxed text-violet-300">
+              <pre className="overflow-x-auto rounded-xl border border-rose-500/15 bg-black/60 p-4 font-mono text-xs leading-relaxed text-rose-300/95 shadow-inner">
                 {sqlQuery}
               </pre>
             </div>
@@ -195,48 +195,27 @@ export function ToolCallResult({ toolPart }: { toolPart: any }) {
           {result.success ? (
             <div className="text-sm text-zinc-300">
               {isQueryTool && Array.isArray(result.rows) && result.rows.length > 0 ? (
-                <div className="overflow-x-auto rounded-lg border border-white/10">
-                  <table className="w-full text-left text-xs">
-                    <thead>
-                      <tr className="border-b border-white/5 bg-white/5">
-                        {Object.keys(result.rows[0]).map((col) => (
-                          <th
-                            key={col}
-                            className="whitespace-nowrap px-4 py-2.5 font-semibold text-zinc-400"
-                          >
-                            {col}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/5">
-                      {result.rows.slice(0, 10).map((row, i) => (
-                        <tr key={i} className="transition-colors hover:bg-white/[0.03]">
-                          {Object.values(row).map((val, j) => (
-                            <td key={j} className="whitespace-nowrap px-4 py-2 text-zinc-300">
-                              {String(val)}
-                            </td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  {result.rows.length > 10 && (
-                    <div className="border-t border-white/5 bg-white/[0.02] p-2 text-center text-[11px] text-zinc-600">
-                      Showing 10 of {result.rows.length} rows
-                    </div>
-                  )}
+                <div className="rounded-xl border border-white/5 bg-zinc-950/60 p-4 text-center">
+                  <p className="text-xs font-semibold text-zinc-400">
+                    Query output sent to workspace dashboard.
+                  </p>
+                  <p className="text-[10px] text-rose-400 font-bold uppercase tracking-widest mt-1.5 animate-pulse">
+                    See Right Explorer Pane
+                  </p>
                 </div>
               ) : (
-                <pre className="max-h-60 overflow-auto rounded-lg bg-black/60 p-3 font-mono text-[10px] text-zinc-500">
+                <pre className="max-h-60 overflow-auto rounded-xl bg-black/50 p-4 font-mono text-[10px] text-zinc-500 leading-normal border border-white/5">
                   {JSON.stringify(result, null, 2)}
                 </pre>
               )}
             </div>
           ) : (
-            <div className="flex items-start gap-2 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <p>{result.error || 'An unknown error occurred'}</p>
+            <div className="flex items-start gap-2.5 rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-xs text-red-400 leading-relaxed">
+              <AlertCircle className="mt-0.5 h-4.5 w-4.5 shrink-0 text-red-500" />
+              <div>
+                <p className="font-bold uppercase tracking-wider text-red-300">Query Exception</p>
+                <p className="mt-1 text-red-400/80">{result.error || 'An unknown database error occurred'}</p>
+              </div>
             </div>
           )}
         </div>

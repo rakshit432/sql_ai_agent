@@ -1,24 +1,23 @@
 export function Background() {
   return (
     <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
-      <div className="absolute inset-0 bg-[#030303]" />
+      {/* Deep dark space background */}
+      <div className="absolute inset-0 bg-[#060608]" />
 
-      <div
-        className="absolute inset-0 opacity-[0.35] animate-grid-drift"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(99, 102, 241, 0.07) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(99, 102, 241, 0.07) 1px, transparent 1px)
-          `,
-          backgroundSize: '48px 48px',
-        }}
-      />
+      {/* Cyber Grid pattern */}
+      <div className="absolute inset-0 cyber-grid opacity-[0.15] animate-grid-drift" />
 
-      <div className="absolute -top-32 left-1/4 h-[500px] w-[500px] rounded-full bg-indigo-600/20 blur-[120px] animate-float" />
-      <div className="absolute top-1/3 -right-32 h-[400px] w-[400px] rounded-full bg-violet-600/15 blur-[100px] animate-float-delayed" />
-      <div className="absolute -bottom-20 left-1/3 h-[350px] w-[350px] rounded-full bg-cyan-500/10 blur-[90px] animate-float" />
+      {/* Futuristic Scanlines */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#060608]/5 to-[#060608]/20 bg-[size:100%_4px]" />
 
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_50%_0%,rgba(99,102,241,0.12),transparent_70%)]" />
+      {/* Floating Neon Mesh Spheres */}
+      <div className="absolute -top-[10%] left-[10%] h-[600px] w-[600px] rounded-full bg-gradient-to-tr from-indigo-600/15 via-violet-600/10 to-transparent blur-[120px] animate-orb-1" />
+      <div className="absolute top-[25%] -right-[10%] h-[500px] w-[500px] rounded-full bg-gradient-to-br from-cyan-500/12 via-indigo-500/5 to-transparent blur-[100px] animate-orb-2" />
+      <div className="absolute -bottom-[10%] left-[20%] h-[550px] w-[550px] rounded-full bg-gradient-to-r from-purple-600/10 via-pink-600/5 to-transparent blur-[110px] animate-orb-3" />
+
+      {/* Soft spotlight radial mask to focus center */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,rgba(99,102,241,0.05),transparent_60%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,transparent_40%,#060608_100%)]" />
     </div>
   );
 }
