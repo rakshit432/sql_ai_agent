@@ -306,36 +306,39 @@ The project can be deployed to **Vercel** with a few simple steps:
 
 ## 📸 Screenshots
 
-Below are illustrations showing the interface layouts (Replace the placeholder links below with your hosting URLs or repository paths):
+Below are illustrations showing the redesigned Database Investigation Workspace layout interfaces:
 
 ### Desktop Views
 
-#### 1. Split Panel Workspace
-*Placeholder for desktop default layout*
-* Description: Default desktop view showing the Chat on the left and the Schema Inspector on the right in a balanced split layout.
-* Location in Artifacts: `default_desktop_view_1781856418197.png`
+#### 1. Split Workspace IDE View
+![Split Workspace IDE View](public/screenshots/desktop_split_view.png)
+*Description: Default desktop layout displaying the Database Schema Panel on the left, the Investigation Feed in the center, and the Evidence Grid & Activity Logs stacked on the right.*
 
-#### 2. Chat Focus Mode
-*Placeholder for chat focus layout*
-* Description: Chat panel expanded to full width for focused conversations, collapsing the workspace panel.
-* Location in Artifacts: `chat_maximized_view_1781856446757.png`
+#### 2. Investigation Focus Mode
+![Investigation Focus Mode](public/screenshots/desktop_chat_focus.png)
+*Description: Maximize prompt window and agent pipeline logs while collapsing the remaining data panels.*
 
-#### 3. Explorer Grid Results
-*Placeholder for query results spreadsheet*
-* Description: Explorer Grid tab displaying the database records return format in a clean, scrollable matrix table.
-* Location in Artifacts: `mobile_results_view_1781856536663.png`
+#### 3. Workspace Data Focus Mode
+![Workspace Data Focus Mode](public/screenshots/desktop_data_focus.png)
+*Description: Maximize the Database Schema and Evidence Grid results dashboard while collapsing the prompt column.*
 
 ### Mobile Views
 
-#### 1. Mobile Chat Tab
-*Placeholder for mobile interface*
-* Description: Mobile viewport showing the floating chat input and conversation bubbles with a bottom navigation bar.
-* Location in Artifacts: `mobile_chat_view_1781856496592.png`
+#### 1. Mobile Investigation Tab
+![Mobile Investigation](public/screenshots/mobile_investigation.png)
+*Description: Mobile viewport showing the Technical prompt input and structured Investigation Cards.*
 
-#### 2. Mobile SQL Logs Tab
-*Placeholder for mobile sql logs console*
-* Description: Mobile view displaying the executed SQL logs timeline.
-* Location in Artifacts: `mobile_sql_logs_view_1781856557994.png`
+#### 2. Mobile Database Schema Inspector
+![Mobile Database Schema](public/screenshots/mobile_database.png)
+*Description: Collapsible Database Schema list rendering tables, columns, and field configurations.*
+
+#### 3. Mobile Evidence Grid
+![Mobile Evidence Grid](public/screenshots/mobile_evidence.png)
+*Description: Spreadsheet view displaying LibSQL output rows for verification.*
+
+#### 4. Mobile Activity Logs
+![Mobile Activity Logs](public/screenshots/mobile_activity.png)
+*Description: Monospaced terminal list logging database command histories.*
 
 ---
 
