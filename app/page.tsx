@@ -10,14 +10,15 @@ import { ChatMessage } from '@/app/components/ChatMessage';
 import { SchemaSidebar } from '@/app/components/SchemaSidebar';
 import { WelcomeScreen } from '@/app/components/WelcomeScreen';
 import { ResultSpreadsheet } from '@/app/components/ResultSpreadsheet';
-import { AlertTriangle, MessageSquare, Database, Table } from 'lucide-react';
+import { WorkspaceConsole } from '@/app/components/WorkspaceConsole';
+import { AlertTriangle, MessageSquare, Database, Table, Terminal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Home() {
   const [input, setInput] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [activeTab, setActiveTab] = useState<'schema' | 'explorer'>('schema');
-  const [activeMobileTab, setActiveMobileTab] = useState<'chat' | 'schema' | 'explorer'>('chat');
+  const [activeMobileTab, setActiveMobileTab] = useState<'chat' | 'schema' | 'explorer' | 'activity'>('chat');
   const [desktopFocus, setDesktopFocus] = useState<'split' | 'chat-focus' | 'workspace-focus'>('split');
   const [selectedModel, setSelectedModel] = useState<string>('gemini-2.5-flash');
 
@@ -189,18 +190,26 @@ export default function Home() {
         hasResults={!!activeQueryResult && activeQueryResult.success && !!activeQueryResult.rows && activeQueryResult.rows.length > 0}
       />
 
-      <div className="relative z-10 flex h-[calc(100vh-56px)] w-full flex-col lg:flex-row pb-16 lg:pb-0">
-        {/* LEFT COLUMN: Conversational AI panel */}
+      <div className="relative z-10 flex flex-1 min-h-0 w-full flex-col lg:flex-row pb-16 lg:pb-0">
+        {/* LEFT COLUMN: Collapsible Database Sidebar (Database Panel) */}
         <div className={cn(
-          "flex-col border-r border-zinc-800 bg-zinc-950/25 backdrop-blur-md relative z-10 transition-all duration-500 ease-in-out min-h-0 h-full",
+          "h-full border-r border-[#27272A] bg-[#111113] relative z-10 transition-all duration-300 min-h-0 flex-col w-60 shrink-0",
+          desktopFocus === 'chat-focus' ? 'hidden' : 'hidden lg:flex'
+        )}>
+          <SchemaSidebar inline open={true} activeQuery={activeQueryResult?.query} />
+        </div>
+
+        {/* MIDDLE COLUMN: Investigation Panel */}
+        <div className={cn(
+          "flex-col border-r border-[#27272A] bg-[#111113] relative z-10 transition-all duration-300 min-h-0 h-full",
           // Mobile visibility
           activeMobileTab === 'chat' ? 'flex' : 'hidden lg:flex',
           // Desktop sizing
-          desktopFocus === 'split' && "w-full lg:w-[40%] min-w-0 lg:min-w-[360px] max-w-none lg:max-w-[500px] lg:flex-none",
+          desktopFocus === 'split' && "w-full lg:w-[40%] min-w-0 lg:min-w-[360px] max-w-none lg:max-w-[480px] lg:flex-none",
           desktopFocus === 'chat-focus' && "w-full lg:w-full lg:flex-1",
           desktopFocus === 'workspace-focus' && "hidden lg:hidden"
         )}>
-          <main ref={mainRef} className="flex-1 overflow-y-auto px-4 py-6 scrollbar-thin">
+          <main ref={mainRef} className="flex-1 overflow-y-auto px-4 py-3 bg-[#09090B]/30 scrollbar-thin">
             <div className="mx-auto flex min-h-full w-full flex-col">
               {messages.length === 0 ? (
                 <WelcomeScreen onSuggestionClick={handleSuggestion} disabled={isLoading} />
@@ -213,10 +222,10 @@ export default function Home() {
               )}
 
               {error && (
-                <div className="my-4 flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/5 p-4 text-xs text-red-400 backdrop-blur-sm">
-                  <AlertTriangle className="mt-0.5 h-4.5 w-4.5 shrink-0 text-red-500" />
+                <div className="my-4 flex items-start gap-3 rounded border border-red-500/20 bg-red-500/5 p-4 text-xs text-red-400 font-mono">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
                   <div>
-                    <p className="font-bold text-red-300 uppercase tracking-widest leading-none">System Warning</p>
+                    <p className="font-bold text-red-300 uppercase tracking-widest leading-none">System Error</p>
                     <p className="mt-1.5 text-red-400/80 leading-relaxed">{error.message}</p>
                   </div>
                 </div>
@@ -237,9 +246,9 @@ export default function Home() {
           />
         </div>
 
-        {/* RIGHT COLUMN: Database Workspace Dashboard */}
+        {/* RIGHT COLUMN: Evidence & Activity Panels */}
         <div className={cn(
-          "flex-col min-h-0 h-full bg-zinc-950/10 backdrop-blur-sm overflow-hidden relative z-10 transition-all duration-500 ease-in-out",
+          "flex-col min-h-0 h-full bg-[#111113] overflow-hidden relative z-10 transition-all duration-300",
           // Mobile visibility
           activeMobileTab !== 'chat' ? 'flex' : 'hidden lg:flex',
           // Desktop sizing
@@ -247,14 +256,19 @@ export default function Home() {
           desktopFocus === 'chat-focus' && "hidden lg:hidden",
           desktopFocus === 'workspace-focus' && "flex-1 w-full lg:w-full"
         )}>
-          {/* Active Workspace View Panel */}
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className={cn("flex-1 flex-col overflow-hidden", activeMobileTab === 'schema' ? 'flex' : 'hidden lg:hidden', activeTab === 'schema' ? 'lg:flex' : 'lg:hidden')}>
-              <SchemaSidebar inline open={true} />
-            </div>
-            <div className={cn("flex-1 flex-col overflow-hidden", activeMobileTab === 'explorer' ? 'flex' : 'hidden lg:hidden', activeTab === 'explorer' ? 'lg:flex' : 'lg:hidden')}>
-              <ResultSpreadsheet result={activeQueryResult} />
-            </div>
+          {/* Mobile Database Inspector view */}
+          <div className={cn("flex-1 flex-col overflow-hidden lg:hidden", activeMobileTab === 'schema' ? 'flex' : 'hidden')}>
+            <SchemaSidebar inline open={true} activeQuery={activeQueryResult?.query} />
+          </div>
+
+          {/* Evidence Grid (Results) */}
+          <div className={cn("flex-1 flex-col overflow-hidden min-h-0", activeMobileTab === 'explorer' ? 'flex' : 'hidden lg:flex')}>
+            <ResultSpreadsheet result={activeQueryResult} />
+          </div>
+
+          {/* Activity Logs (Logs) */}
+          <div className={cn("h-[40%] flex-col overflow-hidden border-t border-[#27272A] shrink-0 min-h-0", activeMobileTab === 'activity' ? 'flex' : 'hidden lg:flex')}>
+            <WorkspaceConsole logs={queryLogs} onLoadQuery={(q) => setInput(q)} />
           </div>
         </div>
       </div>
@@ -262,9 +276,10 @@ export default function Home() {
       {/* Mobile Bottom Navigation Bar */}
       <div className="fixed bottom-0 left-0 right-0 h-16 z-50 mobile-bottom-nav flex lg:hidden items-center justify-around px-2 py-1">
         {[
-          { tab: 'chat', label: 'Chat', icon: MessageSquare },
-          { tab: 'schema', label: 'Schema', icon: Database },
-          { tab: 'explorer', label: 'Results', icon: Table },
+          { tab: 'chat', label: 'Investigation', icon: MessageSquare },
+          { tab: 'schema', label: 'Database', icon: Database },
+          { tab: 'explorer', label: 'Evidence', icon: Table },
+          { tab: 'activity', label: 'Activity', icon: Terminal },
         ].map(({ tab, label, icon: Icon }) => {
           const isActive = activeMobileTab === tab;
           return (
@@ -272,16 +287,16 @@ export default function Home() {
               key={tab}
               onClick={() => {
                 setActiveMobileTab(tab as any);
-                if (tab !== 'chat') {
+                if (tab !== 'chat' && tab !== 'activity') {
                   setActiveTab(tab as any);
                 }
               }}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded-xl transition-all duration-200 cursor-pointer flex-1 border border-transparent',
-                isActive ? 'tab-active-glow text-indigo-400' : 'text-zinc-500 hover:text-zinc-300'
+                'flex flex-col items-center justify-center gap-1 px-3 py-1.5 rounded transition-all duration-200 cursor-pointer flex-1 border border-transparent',
+                isActive ? 'tab-active-glow text-[#6366f1]' : 'text-[#A1A1AA] hover:text-[#FAFAFA]'
               )}
             >
-              <Icon className="h-4.5 w-4.5" />
+              <Icon className="h-4 w-4" />
               <span className="text-[9px] font-extrabold uppercase tracking-wider">{label}</span>
             </button>
           );

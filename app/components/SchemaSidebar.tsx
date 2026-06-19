@@ -34,9 +34,10 @@ interface SchemaSidebarProps {
   open?: boolean;
   onToggle?: () => void;
   inline?: boolean;
+  activeQuery?: string;
 }
 
-export function SchemaSidebar({ open = true, onToggle, inline = false }: SchemaSidebarProps) {
+export function SchemaSidebar({ open = true, onToggle, inline = false, activeQuery }: SchemaSidebarProps) {
   const [tables, setTables] = useState<SchemaTable[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,12 +64,12 @@ export function SchemaSidebar({ open = true, onToggle, inline = false }: SchemaS
     fetchSchema();
   }, [fetchSchema]);
 
-  if (!inline && !open) {
+  if (!open && !inline) {
     return (
       <button
         onClick={onToggle}
-        className="fixed left-4 top-20 z-40 flex h-10 w-10 items-center justify-center rounded-xl glass-panel-premium text-zinc-400 transition-all duration-300 hover:text-white hover:border-indigo-500/30 hover:shadow-lg hover:shadow-indigo-500/5 cursor-pointer"
-        title="Show schema"
+        className="fixed left-4 top-20 z-40 flex h-8 w-8 items-center justify-center rounded border border-[#27272A] bg-[#111113] text-[#A1A1AA] hover:text-[#FAFAFA] cursor-pointer"
+        title="Show database schema"
       >
         <PanelLeftOpen className="h-4 w-4" />
       </button>
@@ -76,34 +77,28 @@ export function SchemaSidebar({ open = true, onToggle, inline = false }: SchemaS
   }
 
   const content = (
-    <div className="flex h-full w-full flex-col">
-      <div className="flex items-center justify-between border-b border-zinc-800/65 px-4 py-4">
-        <div className="flex items-center gap-2.5">
-          <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-500/10 border border-indigo-500/20">
-            <Database className="h-4 w-4 text-indigo-400 animate-pulse" />
-            <span className="absolute -right-0.5 -top-0.5 flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500" />
-            </span>
-          </div>
+    <div className="flex h-full w-full flex-col bg-[#111113]">
+      <div className="flex items-center justify-between border-b border-[#27272A] px-4 py-3 bg-[#09090B]">
+        <div className="flex items-center gap-2">
+          <Database className="h-4 w-4 text-[#A1A1AA]" />
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-white">Database Schema</p>
-            <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider leading-none mt-1">Metadata Structure</p>
+            <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#FAFAFA]">Database Schema</p>
+            <p className="text-[8px] font-mono text-[#A1A1AA] uppercase tracking-wider leading-none mt-0.5">Directory list</p>
           </div>
         </div>
         <div className="flex items-center gap-1">
           <button
             onClick={fetchSchema}
             disabled={loading}
-            className="group rounded-lg p-1.5 text-zinc-500 transition-all hover:bg-zinc-800/30 hover:text-zinc-300 active:scale-95 cursor-pointer"
+            className="rounded p-1 text-[#A1A1AA] hover:bg-zinc-900/40 hover:text-white transition-colors cursor-pointer"
             title="Refresh schema"
           >
-            <RefreshCw className={cn('h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-180', loading && 'animate-spin')} />
+            <RefreshCw className={cn('h-3.5 w-3.5', loading && 'animate-spin')} />
           </button>
           {!inline && onToggle && (
             <button
               onClick={onToggle}
-              className="rounded-lg p-1.5 text-zinc-500 transition-colors hover:bg-zinc-800/30 hover:text-zinc-300 cursor-pointer"
+              className="rounded p-1 text-[#A1A1AA] hover:bg-zinc-900/40 hover:text-white transition-colors cursor-pointer"
               title="Hide schema"
             >
               <PanelLeftClose className="h-3.5 w-3.5" />
@@ -112,16 +107,16 @@ export function SchemaSidebar({ open = true, onToggle, inline = false }: SchemaS
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 select-none">
         {loading && (
-          <div className="flex flex-col items-center justify-center gap-2 py-12 text-xs text-zinc-500">
-            <Loader2 className="h-5 w-5 animate-spin text-indigo-500" />
+          <div className="flex flex-col items-center justify-center gap-2 py-12 text-xs text-[#A1A1AA] font-mono">
+            <Loader2 className="h-4 w-4 animate-spin text-[#6366f1]" />
             <span>Scanning tables...</span>
           </div>
         )}
 
         {error && (
-          <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-xs text-red-400 animate-fade-in">
+          <div className="rounded border border-red-500/20 bg-red-500/5 p-3 text-[10px] font-mono text-red-400">
             {error}
           </div>
         )}
@@ -130,36 +125,50 @@ export function SchemaSidebar({ open = true, onToggle, inline = false }: SchemaS
           const columns = parseColumns(table.definition);
           const isExpanded = expanded[table.name];
 
+          // Substring regex match to see if table is mentioned in activeQuery
+          const isTableActive = activeQuery
+            ? new RegExp(`\\b${table.name}\\b`, 'i').test(activeQuery)
+            : false;
+
           return (
             <div
               key={table.name}
               className={cn(
-                'overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-950/20 transition-all duration-200',
-                isExpanded ? 'border-indigo-500/10 bg-indigo-500/[0.01]' : 'hover:border-zinc-700/80'
+                'overflow-hidden rounded border transition-all duration-150',
+                isTableActive
+                  ? 'border-[#6366f1]/50 bg-[#6366f1]/5'
+                  : 'border-[#27272A] bg-[#09090B]/30'
               )}
             >
               <button
                 onClick={() => setExpanded((prev) => ({ ...prev, [table.name]: !prev[table.name] }))}
-                className="flex w-full items-center gap-2 px-3 py-3 text-left transition-colors hover:bg-zinc-800/20 cursor-pointer"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-zinc-900/20 cursor-pointer"
               >
-                <Table2 className={cn('h-4 w-4 shrink-0 transition-colors', isExpanded ? 'text-indigo-400' : 'text-zinc-500')} />
-                <span className="flex-1 truncate font-mono text-[11px] font-bold tracking-wide text-zinc-350 group-hover:text-white">
+                <Table2 className={cn('h-3.5 w-3.5 shrink-0', isTableActive ? 'text-[#6366f1]' : 'text-[#A1A1AA]')} />
+                <span className="flex-1 truncate font-mono text-[11px] font-bold tracking-wide text-[#FAFAFA]">
                   {table.name}
                 </span>
-                <span className="rounded bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 font-mono text-[9px] font-bold text-zinc-500">
-                  {columns.length}
+                
+                {isTableActive && (
+                  <span className="rounded bg-[#6366f1]/20 border border-[#6366f1]/30 px-1 py-0.2 text-[8px] font-bold text-[#6366f1] font-mono uppercase tracking-wider">
+                    Active
+                  </span>
+                )}
+                
+                <span className="font-mono text-[9px] text-[#A1A1AA]">
+                  ({columns.length})
                 </span>
                 {isExpanded ? (
-                  <ChevronDown className="h-3 w-3 text-zinc-500" />
+                  <ChevronDown className="h-3 w-3 text-[#A1A1AA]" />
                 ) : (
-                  <ChevronRight className="h-3 w-3 text-zinc-500" />
+                  <ChevronRight className="h-3 w-3 text-[#A1A1AA]" />
                 )}
               </button>
 
               {isExpanded && (
-                <div className="border-t border-zinc-800/40 bg-zinc-950/40 px-3 py-2 space-y-1">
-                  <div className="flex items-center justify-between mb-1.5 border-b border-zinc-800/40 pb-1">
-                    <span className="text-[9px] font-bold text-indigo-400/80 tracking-wider uppercase">Schema Fields</span>
+                <div className="border-t border-[#27272A]/50 bg-[#09090B]/50 px-3 py-2 space-y-1">
+                  <div className="flex items-center justify-between mb-1 border-b border-[#27272A]/40 pb-1">
+                    <span className="text-[8px] font-mono font-bold text-[#A1A1AA] uppercase tracking-wider">Fields</span>
                     <button
                       onClick={async (e) => {
                         e.stopPropagation();
@@ -167,24 +176,20 @@ export function SchemaSidebar({ open = true, onToggle, inline = false }: SchemaS
                         setCopiedTable(table.name);
                         setTimeout(() => setCopiedTable(null), 2000);
                       }}
-                      className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 hover:text-indigo-400 bg-zinc-900 border border-zinc-800/80 rounded px-1.5 py-0.5 transition-colors cursor-pointer"
-                      title="Copy full DDL script"
+                      className="text-[8px] font-mono font-bold uppercase tracking-wider text-[#A1A1AA] hover:text-[#FAFAFA] bg-[#161619] border border-[#27272A] rounded px-1.5 py-0.5 cursor-pointer"
                     >
-                      {copiedTable === table.name ? 'Copied DDL!' : 'Copy DDL'}
+                      {copiedTable === table.name ? 'Copied' : 'DDL'}
                     </button>
                   </div>
                   {columns.map((col) => (
                     <div
                       key={col}
-                      className="group flex items-center justify-between py-1 font-mono text-[10px] text-zinc-500 hover:text-zinc-300 transition-colors"
+                      className="flex items-center justify-between py-0.5 font-mono text-[10px] text-[#A1A1AA] hover:text-[#FAFAFA]"
                     >
-                      <div className="flex items-center gap-2">
-                        <BarChart3 className="h-3 w-3 text-zinc-700 group-hover:text-indigo-400/50 transition-colors" />
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[#27272A] font-bold">•</span>
                         <span>{col}</span>
                       </div>
-                      <span className="opacity-0 group-hover:opacity-100 text-[8px] uppercase tracking-wider text-indigo-400/70 transition-opacity font-sans font-bold">
-                        field
-                      </span>
                     </div>
                   ))}
                 </div>
@@ -194,9 +199,9 @@ export function SchemaSidebar({ open = true, onToggle, inline = false }: SchemaS
         })}
       </div>
 
-      <div className="border-t border-zinc-850 p-3 bg-zinc-950/20">
-        <p className="text-center text-[10px] font-bold uppercase tracking-wider text-zinc-500 whitespace-nowrap truncate">
-          {tables.length} table{tables.length !== 1 ? 's' : ''} · Read-Only Mode
+      <div className="border-t border-[#27272A] p-2 bg-[#09090B] text-center">
+        <p className="text-[9px] font-mono font-bold uppercase tracking-wider text-[#A1A1AA] whitespace-nowrap truncate">
+          Schema: Read-Only
         </p>
       </div>
     </div>
@@ -210,8 +215,7 @@ export function SchemaSidebar({ open = true, onToggle, inline = false }: SchemaS
     <motion.aside
       initial={{ x: -10, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-      className="flex h-full w-72 shrink-0 flex-col border-r border-zinc-800 bg-[#09090b]/80 backdrop-blur-md z-25"
+      className="flex h-full w-60 shrink-0 flex-col border-r border-[#27272A]"
     >
       {content}
     </motion.aside>

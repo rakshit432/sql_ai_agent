@@ -1,107 +1,99 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import {
-  ArrowRight,
-  TrendingUp,
-  BarChart3,
-  Package,
-  Database,
-} from 'lucide-react';
-
-const SUGGESTIONS = [
-  {
-    icon: TrendingUp,
-    label: 'Revenue Analysis',
-    query: 'What were our total sales last month?',
-  },
-  {
-    icon: BarChart3,
-    label: 'Regional Performance',
-    query: 'Which region has the highest revenue?',
-  },
-  {
-    icon: Package,
-    label: 'Inventory Insights',
-    query: 'Show me the top 5 most expensive products.',
-  },
-];
+import { Terminal, Database, BookOpen, Key, AlertTriangle } from 'lucide-react';
 
 interface WelcomeScreenProps {
   onSuggestionClick: (query: string) => void;
-  disabled?: boolean;
+  disabled: boolean;
 }
 
 export function WelcomeScreen({ onSuggestionClick, disabled }: WelcomeScreenProps) {
+  const templates = [
+    {
+      title: 'Low Stock Scan',
+      query: 'SELECT name, category, stock FROM products WHERE stock < 30 ORDER BY stock ASC;',
+      desc: 'Scans inventory database for products with less than 30 items in stock.',
+    },
+    {
+      title: 'Revenue By Region',
+      query: 'SELECT region, COUNT(id) as total_transactions, SUM(total_amount) as total_revenue FROM sales GROUP BY region ORDER BY total_revenue DESC;',
+      desc: 'Aggregates sales revenue and transaction count grouped by customer region.',
+    },
+    {
+      title: 'Top Purchasing Customers',
+      query: 'SELECT customer_name, SUM(total_amount) as total_spent, COUNT(id) as orders_count FROM sales GROUP BY customer_name ORDER BY total_spent DESC LIMIT 5;',
+      desc: 'Lists the top 5 customers sorted by highest historical order amount.',
+    },
+  ];
+
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center select-none max-w-md mx-auto">
-      {/* Icon Badge */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.4 }}
-        className="mb-6 flex h-14 w-14 items-center justify-center rounded-2xl border border-zinc-800 bg-zinc-900/50 shadow-md"
-      >
-        <Database className="h-6 w-6 text-indigo-400" />
-      </motion.div>
+    <div className="flex flex-1 flex-col items-center justify-center py-8 px-6 max-w-2xl mx-auto select-none animate-fade-in">
+      <div className="w-full border border-[#27272A] bg-[#111113] rounded-lg p-6 space-y-6">
+        {/* Header Branding */}
+        <div className="flex items-center gap-3 border-b border-[#27272A] pb-4">
+          <div className="flex h-9 w-9 items-center justify-center rounded border border-[#27272A] bg-[#09090B] text-[#6366f1]">
+            <Terminal className="h-5 w-5" />
+          </div>
+          <div>
+            <h2 className="font-display text-[14px] font-bold uppercase tracking-wider text-[#FAFAFA]">
+              New Database Investigation
+            </h2>
+            <p className="text-[10px] text-[#A1A1AA] font-mono mt-0.5">
+              Nexus AI Agent Workspace Workspace
+            </p>
+          </div>
+        </div>
 
-      {/* Slogan */}
-      <motion.h2
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05, duration: 0.4 }}
-        className="mb-3 text-2xl font-bold tracking-tight text-zinc-100"
-      >
-        Query Database in Plain English
-      </motion.h2>
+        {/* Workspace direct instructions */}
+        <div className="space-y-3 font-mono text-[10px] text-[#A1A1AA] leading-relaxed">
+          <div className="flex items-start gap-2.5">
+            <BookOpen className="h-4 w-4 text-[#6366f1] shrink-0 mt-0.5" />
+            <p>
+              <strong className="text-[#FAFAFA]">Investigation Workflow:</strong> Formulate a plain English request or write a SELECT statement. The agent automatically runs schema discovery, parses relevant tables, checks command safety, and executes LibSQL commands.
+            </p>
+          </div>
+          
+          <div className="flex items-start gap-2.5">
+            <Key className="h-4 w-4 text-[#6366f1] shrink-0 mt-0.5" />
+            <p>
+              <strong className="text-[#FAFAFA]">Read-Only Layer:</strong> Only <code className="text-[#FAFAFA] bg-[#161619] px-1 rounded">SELECT</code> operations are permitted. Data mutation queries (<code className="text-red-400">INSERT</code>, <code className="text-red-400">DELETE</code>, <code className="text-red-400">UPDATE</code>) are blocked.
+            </p>
+          </div>
+        </div>
 
-      {/* Sub-text */}
-      <motion.p
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1, duration: 0.4 }}
-        className="mb-8 text-sm leading-relaxed text-zinc-400"
-      >
-        Ask questions naturally. The AI translates prompts to SQL, executes the queries securely, and returns structured data tables.
-      </motion.p>
-
-      {/* Suggestions List */}
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.15, duration: 0.4 }}
-        className="flex flex-col w-full gap-3"
-      >
-        {SUGGESTIONS.map((item, i) => {
-          const Icon = item.icon;
-          return (
-            <motion.button
-              key={item.label}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + i * 0.05, duration: 0.3 }}
-              disabled={disabled}
-              onClick={() => onSuggestionClick(item.query)}
-              className="group flex w-full items-center justify-between rounded-xl border border-zinc-800/80 bg-zinc-900/20 p-3.5 text-left transition-all duration-200 hover:bg-zinc-900/50 hover:border-zinc-700 disabled:opacity-50 disabled:hover:scale-100 cursor-pointer"
-            >
-              <div className="flex items-center gap-3.5 min-w-0">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-400 group-hover:text-indigo-400 transition-colors">
-                  <Icon className="h-4 w-4" />
-                </div>
-                <div className="min-w-0">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 block leading-none">
-                    {item.label}
+        {/* Investigation Templates Section */}
+        <div className="space-y-3 pt-2">
+          <span className="font-mono text-[9px] font-bold text-[#A1A1AA] uppercase tracking-wider block">
+            Investigation Templates
+          </span>
+          
+          <div className="grid grid-cols-1 gap-2.5">
+            {templates.map((tpl, i) => (
+              <button
+                key={i}
+                onClick={() => !disabled && onSuggestionClick(tpl.query)}
+                disabled={disabled}
+                className="w-full text-left p-3.5 rounded border border-[#27272A] bg-[#09090B]/40 hover:bg-[#161619] hover:border-[#6366f1]/30 transition-all cursor-pointer group disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono text-[11px] font-bold text-[#FAFAFA] group-hover:text-[#6366f1]">
+                    {tpl.title}
                   </span>
-                  <span className="text-xs font-medium text-zinc-300 group-hover:text-zinc-100 transition-colors block mt-1.5 truncate">
-                    {item.query}
+                  <span className="font-mono text-[8px] text-[#A1A1AA] uppercase tracking-wider group-hover:text-white">
+                    Load Query →
                   </span>
                 </div>
-              </div>
-              <ArrowRight className="h-4 w-4 text-zinc-600 opacity-0 -translate-x-1.5 transition-all group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-indigo-400 shrink-0 ml-2" />
-            </motion.button>
-          );
-        })}
-      </motion.div>
+                <p className="text-[10px] text-[#A1A1AA] mt-1 leading-relaxed">
+                  {tpl.desc}
+                </p>
+                <code className="block mt-2 font-mono text-[9px] text-[#6366f1]/90 bg-[#09090B] p-1.5 rounded border border-[#27272A]/40 truncate">
+                  {tpl.query}
+                </code>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

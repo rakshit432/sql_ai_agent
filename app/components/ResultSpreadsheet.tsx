@@ -34,17 +34,15 @@ function rowsToCsv(rows: Record<string, unknown>[]): string {
 }
 
 export function ResultSpreadsheet({ result }: ResultSpreadsheetProps) {
-  const [copied, setCopied] = useState(false);
-
   if (!result) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center p-8 text-center h-full">
-        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-zinc-600">
-          <Table className="h-5 w-5" />
+      <div className="flex flex-1 flex-col items-center justify-center p-8 text-center h-full bg-[#111113]">
+        <div className="mb-2 flex h-8 w-8 items-center justify-center rounded border border-[#27272A] bg-[#09090B] text-[#A1A1AA]">
+          <Table className="h-4 w-4" />
         </div>
-        <p className="text-sm font-semibold text-zinc-400">Spreadsheet vacant</p>
-        <p className="max-w-xs text-xs text-zinc-600 mt-1 leading-relaxed">
-          Execute an AI database query first. The query results will render inside this interactive data grid.
+        <p className="text-xs font-bold text-[#FAFAFA] uppercase tracking-wider">Spreadsheet Vacant</p>
+        <p className="max-w-xs text-[10px] text-[#A1A1AA] mt-1 leading-relaxed font-mono">
+          Execute a query in the prompt capsule. Output rows will populate here as evidence.
         </p>
       </div>
     );
@@ -52,13 +50,13 @@ export function ResultSpreadsheet({ result }: ResultSpreadsheetProps) {
 
   if (!result.success) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center p-8 text-center h-full">
-        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-500">
-          <AlertCircle className="h-5 w-5" />
+      <div className="flex flex-1 flex-col items-center justify-center p-8 text-center h-full bg-[#111113]">
+        <div className="mb-2 flex h-8 w-8 items-center justify-center rounded border border-red-500/20 bg-red-500/5 text-red-400">
+          <AlertCircle className="h-4 w-4" />
         </div>
-        <p className="text-sm font-semibold text-red-400">Query execution failed</p>
-        <p className="max-w-xs text-xs text-zinc-500 mt-1 leading-relaxed">
-          Inspect the error details inline within the chat query step to resolve database syntax issues.
+        <p className="text-xs font-bold text-red-400 uppercase tracking-wider">Query Error</p>
+        <p className="max-w-xs text-[10px] text-[#A1A1AA] mt-1 leading-relaxed font-mono">
+          Syntax issue or table constraint failed. Check the execution logs timeline for details.
         </p>
       </div>
     );
@@ -67,13 +65,13 @@ export function ResultSpreadsheet({ result }: ResultSpreadsheetProps) {
   const rows = result.rows || [];
   if (rows.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center p-8 text-center h-full">
-        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-zinc-500">
-          <Table className="h-5 w-5" />
+      <div className="flex flex-1 flex-col items-center justify-center p-8 text-center h-full bg-[#111113]">
+        <div className="mb-2 flex h-8 w-8 items-center justify-center rounded border border-[#27272A] bg-[#09090B] text-[#A1A1AA]">
+          <Table className="h-4 w-4" />
         </div>
-        <p className="text-sm font-semibold text-zinc-300">Empty result set</p>
-        <p className="max-w-xs text-xs text-zinc-500 mt-1 leading-relaxed">
-          The query ran successfully, but returned 0 database entries.
+        <p className="text-xs font-bold text-[#FAFAFA] uppercase tracking-wider">Empty Set</p>
+        <p className="max-w-xs text-[10px] text-[#A1A1AA] mt-1 leading-relaxed font-mono">
+          Query completed successfully but returned 0 rows.
         </p>
       </div>
     );
@@ -87,7 +85,7 @@ export function ResultSpreadsheet({ result }: ResultSpreadsheetProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'nexus-export.csv';
+    a.download = 'query-evidence.csv';
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -98,36 +96,36 @@ export function ResultSpreadsheet({ result }: ResultSpreadsheetProps) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'nexus-export.json';
+    a.download = 'query-evidence.json';
     a.click();
     URL.revokeObjectURL(url);
   };
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden h-full">
-      {/* Interactive table tools bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 bg-zinc-950/20 px-4 py-3">
+    <div className="flex flex-1 flex-col overflow-hidden h-full bg-[#111113]">
+      {/* Evidence Tools Bar */}
+      <div className="flex items-center justify-between border-b border-[#27272A] bg-[#09090B] px-4 py-2">
         <div className="flex items-center gap-2">
-          <Table className="h-4 w-4 text-emerald-400" />
-          <span className="text-xs font-bold uppercase tracking-wider font-sans text-zinc-400">
-            Explorer Grid
+          <Table className="h-3.5 w-3.5 text-[#6366f1]" />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#FAFAFA]">
+            Evidence Grid
           </span>
-          <span className="rounded-full bg-emerald-500/10 border border-emerald-500/10 px-2.5 py-0.5 text-[9px] font-bold text-emerald-400 uppercase tracking-widest leading-none">
-            {rows.length} rows returned
+          <span className="rounded border border-[#27272A] bg-[#111113] px-2 py-0.5 text-[9px] font-mono text-[#A1A1AA] font-bold">
+            {rows.length} rows
           </span>
         </div>
 
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleExportCsv}
-            className="flex h-7 items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 transition-all hover:border-emerald-500/20 hover:text-white cursor-pointer"
+            className="flex h-6 items-center gap-1 rounded border border-[#27272A] bg-[#161619] px-2 text-[9px] font-mono font-bold text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] cursor-pointer"
           >
             <Download className="h-3 w-3" />
             <span>CSV</span>
           </button>
           <button
             onClick={handleExportJson}
-            className="flex h-7 items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 transition-all hover:border-emerald-500/20 hover:text-white cursor-pointer"
+            className="flex h-6 items-center gap-1 rounded border border-[#27272A] bg-[#161619] px-2 text-[9px] font-mono font-bold text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] cursor-pointer"
           >
             <FileJson className="h-3 w-3" />
             <span>JSON</span>
@@ -135,42 +133,37 @@ export function ResultSpreadsheet({ result }: ResultSpreadsheetProps) {
         </div>
       </div>
 
-      {/* Spreadsheet grid */}
-      <div className="flex-1 overflow-auto bg-[#040406]/10">
-        <div className="inline-block min-w-full align-middle">
-          <table className="min-w-full divide-y divide-white/5 text-[11px] font-medium leading-normal">
-            <thead>
-              <tr className="bg-zinc-950/40">
+      {/* Database Monospace Grid */}
+      <div className="flex-1 overflow-auto">
+        <table className="min-w-full divide-y divide-[#27272A] text-[11px] font-mono text-[#A1A1AA]">
+          <thead className="bg-[#09090B]/50 sticky top-0 z-10">
+            <tr>
+              {headers.map((h) => (
+                <th
+                  key={h}
+                  className="whitespace-nowrap px-4 py-2 text-left font-bold text-[#FAFAFA] border-b border-[#27272A]"
+                >
+                  {h}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#27272A] bg-[#111113]">
+            {rows.map((row, i) => (
+              <tr key={i} className="hover:bg-[#161619] transition-colors">
                 {headers.map((h) => (
-                  <th
-                    key={h}
-                    className="whitespace-nowrap px-4 py-3 text-left font-bold uppercase tracking-wider text-zinc-400 border-b border-white/5"
-                  >
-                    {h}
-                  </th>
+                  <td key={h} className="whitespace-nowrap px-4 py-2 border-r border-[#27272a]/40 text-[#FAFAFA]">
+                    {row[h] == null ? (
+                      <span className="text-[#A1A1AA]/30 italic">NULL</span>
+                    ) : (
+                      String(row[h])
+                    )}
+                  </td>
                 ))}
               </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {rows.map((row, i) => (
-                <tr
-                  key={i}
-                  className="transition-colors hover:bg-white/[0.02] even:bg-white/[0.01]"
-                >
-                  {headers.map((h) => (
-                    <td key={h} className="whitespace-nowrap px-4 py-2.5 font-mono text-zinc-300">
-                      {row[h] == null ? (
-                        <span className="text-zinc-600 font-sans italic font-bold">NULL</span>
-                      ) : (
-                        String(row[h])
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

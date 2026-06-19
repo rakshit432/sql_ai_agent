@@ -26,99 +26,97 @@ export function WorkspaceConsole({ logs, onLoadQuery }: WorkspaceConsoleProps) {
   };
 
   return (
-    <div className="flex flex-1 flex-col overflow-hidden h-full">
-      {/* Tab Header Stats */}
-      <div className="flex items-center justify-between border-b border-white/5 bg-zinc-950/20 px-4 py-3">
-        <div className="flex items-center gap-2 text-zinc-400">
-          <Terminal className="h-4 w-4 text-rose-500" />
-          <span className="text-xs font-bold uppercase tracking-wider font-sans">Query Execution Logs</span>
+    <div className="flex flex-1 flex-col overflow-hidden h-full bg-[#111113]">
+      {/* Activity Header */}
+      <div className="flex items-center justify-between border-b border-[#27272A] bg-[#09090B] px-4 py-2">
+        <div className="flex items-center gap-2 text-[#A1A1AA]">
+          <Terminal className="h-3.5 w-3.5 text-[#6366f1]" />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#FAFAFA]">Activity Logs</span>
         </div>
-        <div className="flex items-center gap-2 rounded-lg bg-white/5 px-2 py-0.5 font-mono text-[10px] text-zinc-500">
-          <History className="h-3 w-3" />
-          <span>{logs.length} Queries run</span>
+        <div className="flex items-center gap-1.5 rounded border border-[#27272A] bg-[#111113] px-2 py-0.5 font-mono text-[9px] text-[#A1A1AA] font-bold">
+          <History className="h-3 w-3 text-[#A1A1AA]" />
+          <span>{logs.length} executed</span>
         </div>
       </div>
 
       {/* Main Console Feed */}
-      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-3.5">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2.5 bg-[#111113]">
         {logs.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center py-20 text-center">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-zinc-600">
-              <Terminal className="h-5 w-5" />
+          <div className="flex h-full flex-col items-center justify-center py-12 text-center">
+            <div className="mb-2 flex h-8 w-8 items-center justify-center rounded border border-[#27272A] bg-[#09090B] text-[#A1A1AA]">
+              <Terminal className="h-4 w-4" />
             </div>
-            <p className="text-sm font-semibold text-zinc-400">No queries executed yet</p>
-            <p className="max-w-xs text-xs text-zinc-600 mt-1 leading-relaxed">
-              Queries parsed from your AI chat sessions will appear here as live console history logs.
+            <p className="text-[11px] font-bold text-[#FAFAFA] uppercase tracking-wider">No Activity Logged</p>
+            <p className="max-w-xs text-[10px] text-[#A1A1AA] mt-1 leading-relaxed font-mono">
+              Executed queries from your AI investigations will log parameters and latency stats here.
             </p>
           </div>
         ) : (
           logs.map((log, index) => (
             <div
               key={index}
-              className={`overflow-hidden rounded-xl border bg-zinc-950/30 transition-all duration-300 ${
-                log.success ? 'border-white/5 hover:border-white/10' : 'border-rose-500/20 bg-rose-950/5'
+              className={`overflow-hidden rounded border transition-all ${
+                log.success ? 'border-[#27272A] bg-[#09090B]/30' : 'border-red-500/20 bg-red-500/5'
               }`}
             >
               {/* Header log status bar */}
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 px-3.5 py-2.5 bg-black/10">
-                <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold tracking-wider font-mono">
-                  <span className="text-zinc-500">{log.timestamp}</span>
-                  <span>·</span>
+              <div className="flex items-center justify-between gap-2 border-b border-[#27272A]/70 px-3 py-1.5 bg-[#09090B]/60">
+                <div className="flex items-center gap-2 text-[9px] font-mono font-bold">
+                  <span className="text-[#A1A1AA]">{log.timestamp}</span>
+                  <span className="text-[#27272A]">•</span>
                   {log.success ? (
-                    <span className="text-emerald-400 font-sans uppercase font-extrabold text-[9px] bg-emerald-500/10 px-1.5 py-0.5 rounded">
+                    <span className="text-emerald-400 uppercase tracking-widest text-[8px] bg-emerald-500/10 px-1 rounded">
                       Success
                     </span>
                   ) : (
-                    <span className="text-rose-400 font-sans uppercase font-extrabold text-[9px] bg-rose-500/10 px-1.5 py-0.5 rounded animate-pulse">
-                      Error
+                    <span className="text-red-400 uppercase tracking-widest text-[8px] bg-red-500/10 px-1 rounded">
+                      Exception
                     </span>
                   )}
                   {log.count !== undefined && (
                     <>
-                      <span>·</span>
-                      <span className="text-zinc-400 font-normal">{log.count} rows</span>
+                      <span className="text-[#27272A]">•</span>
+                      <span className="text-[#A1A1AA] font-normal">{log.count} rows</span>
                     </>
                   )}
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => handleCopy(log.query, index)}
-                    className="flex h-6 items-center gap-1 rounded bg-white/5 border border-white/5 px-2 text-[9px] font-bold uppercase tracking-wider text-zinc-400 transition-colors hover:text-white hover:border-white/10 cursor-pointer"
+                    className="flex h-5 items-center gap-1 rounded border border-[#27272A] bg-[#161619] px-2 text-[8px] font-mono font-bold text-[#A1A1AA] hover:text-[#FAFAFA] hover:bg-[#27272A] cursor-pointer"
                     title="Copy query code"
                   >
                     {copiedIndex === index ? (
                       <>
-                        <Check className="h-2.5 w-2.5 text-emerald-400" />
+                        <Check className="h-2 w-2 text-emerald-400" />
                         <span>Copied</span>
                       </>
                     ) : (
                       <>
-                        <Copy className="h-2.5 w-2.5" />
                         <span>Copy</span>
                       </>
                     )}
                   </button>
                   <button
                     onClick={() => onLoadQuery(log.query)}
-                    className="flex h-6 items-center gap-1 rounded bg-rose-500/10 border border-rose-500/15 px-2 text-[9px] font-bold uppercase tracking-wider text-rose-400 transition-all hover:bg-rose-500 hover:text-white active:scale-95 cursor-pointer"
-                    title="Load into chat editor"
+                    className="flex h-5 items-center gap-1 rounded border border-[#27272A] bg-[#161619] px-2 text-[8px] font-mono font-bold text-[#6366f1] hover:text-white hover:bg-[#6366f1] cursor-pointer"
+                    title="Load into capsule editor"
                   >
-                    <Play className="h-2.5 w-2.5 fill-current" />
                     <span>Run</span>
                   </button>
                 </div>
               </div>
 
               {/* Code display */}
-              <div className="p-3 bg-zinc-950/20 font-mono text-[11px] leading-relaxed text-zinc-300 overflow-x-auto">
-                <pre className="text-rose-300/80">{log.query}</pre>
+              <div className="p-3.5 bg-[#0c0c0f] font-mono text-[10px] leading-relaxed text-[#FAFAFA] overflow-x-auto select-text">
+                <pre>{log.query}</pre>
               </div>
 
               {/* Exception details */}
               {!log.success && log.error && (
-                <div className="border-t border-rose-950 bg-rose-950/10 px-3.5 py-2 text-[10px] text-rose-300 font-mono leading-relaxed">
-                  <span className="font-bold text-rose-400 uppercase tracking-widest block mb-0.5">Exception details:</span>
+                <div className="border-t border-[#27272A] bg-red-500/[0.02] px-3.5 py-2 text-[9px] font-mono text-red-400 leading-relaxed select-text">
+                  <span className="font-bold uppercase tracking-wider block mb-0.5 text-red-300">Exception trace:</span>
                   {log.error}
                 </div>
               )}
