@@ -1,5 +1,7 @@
 import { streamText, tool, convertToModelMessages, stepCountIs } from 'ai';
 import { google } from '@ai-sdk/google';
+import { groq } from '@ai-sdk/groq';
+import { LanguageModelV3 } from '@ai-sdk/provider';
 import { z } from 'zod';
 import { db } from '@/db/db.config';
 
@@ -21,14 +23,92 @@ STRICT Rules:
 - If a query fails, analyze the error, fix the SQL, and retry.
 `;
 
+class FallbackLanguageModel implements LanguageModelV3 {
+  readonly specificationVersion = 'v3';
+  readonly provider = 'fallback-provider';
+  readonly modelId: string;
+
+  constructor(private readonly models: LanguageModelV3[]) {
+    if (models.length === 0) {
+      throw new Error('FallbackLanguageModel requires at least one model.');
+    }
+    this.modelId = models[0].modelId;
+  }
+
+  get supportedUrls() {
+    return this.models[0].supportedUrls;
+  }
+
+  async doGenerate(options: Parameters<LanguageModelV3['doGenerate']>[0]) {
+    let lastError: any = null;
+    for (const model of this.models) {
+      try {
+        console.log(`[Fallback] Attempting doGenerate with model ${model.provider}:${model.modelId}`);
+        return await model.doGenerate(options);
+      } catch (error) {
+        lastError = error;
+        console.warn(`[Fallback] Model ${model.provider}:${model.modelId} generate failed:`, error);
+      }
+    }
+    throw lastError;
+  }
+
+  async doStream(options: Parameters<LanguageModelV3['doStream']>[0]) {
+    let lastError: any = null;
+    for (const model of this.models) {
+      try {
+        console.log(`[Fallback] Attempting doStream with model ${model.provider}:${model.modelId}`);
+        return await model.doStream(options);
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`[Fallback] Model ${model.provider}:${model.modelId} stream failed:`, error?.message || error);
+      }
+    }
+    throw lastError;
+  }
+}
+
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json();
+    const { messages, modelId } = await req.json();
 
     let step = 0;
 
+    // Build model list for fallback chain
+    const modelList: LanguageModelV3[] = [];
+    const selected = modelId || 'gemini-2.5-flash';
+
+    if (selected === 'gemini-2.5-flash') {
+      modelList.push(google('gemini-2.5-flash'));
+      if (process.env.GROQ_API_KEY) {
+        modelList.push(groq('qwen/qwen3-32b'));
+        modelList.push(groq('openai/gpt-oss-120b'));
+      }
+    } else if (selected === 'qwen/qwen3-32b') {
+      if (!process.env.GROQ_API_KEY) {
+        return new Response(
+          'Groq API Key (GROQ_API_KEY) is missing. Please add it to your local environment (.env.local) to use Qwen models.',
+          { status: 400 }
+        );
+      }
+      modelList.push(groq('qwen/qwen3-32b'));
+      modelList.push(groq('openai/gpt-oss-120b'));
+    } else if (selected === 'openai/gpt-oss-120b') {
+      if (!process.env.GROQ_API_KEY) {
+        return new Response(
+          'Groq API Key (GROQ_API_KEY) is missing. Please add it to your local environment (.env.local) to use GPT-OSS models.',
+          { status: 400 }
+        );
+      }
+      modelList.push(groq('openai/gpt-oss-120b'));
+    } else {
+      modelList.push(google('gemini-2.5-flash'));
+    }
+
+    const modelInstance = new FallbackLanguageModel(modelList);
+
     const result = streamText({
-      model: google('gemini-2.5-flash'),
+      model: modelInstance,
       system: SYSTEM_PROMPT,
       messages: await convertToModelMessages(messages),
       stopWhen: stepCountIs(10),

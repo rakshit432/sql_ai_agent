@@ -35,22 +35,22 @@ export function ChatMessage({ message, index }: { message: any; index: number })
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: Math.min(index * 0.04, 0.25), ease: [0.16, 1, 0.3, 1] }}
-      className={cn('group flex w-full py-4', isUser ? 'justify-end' : 'justify-start')}
+      transition={{ duration: 0.4, delay: Math.min(index * 0.03, 0.2), ease: [0.16, 1, 0.3, 1] }}
+      className={cn('group flex w-full py-4.5', isUser ? 'justify-end' : 'justify-start')}
     >
       <div className={cn('flex max-w-[85%] gap-3.5', isUser ? 'flex-row-reverse' : 'flex-row')}>
         {/* Avatar container */}
         <div
           className={cn(
-            'mt-1.5 flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-xl border transition-all duration-300',
+            'mt-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border transition-all duration-200',
             isUser
-              ? 'border-white/5 bg-zinc-900 text-zinc-400'
-              : 'border-rose-500/20 bg-gradient-to-br from-rose-500 via-amber-500 to-pink-500 text-white shadow-lg shadow-rose-500/10 hover:scale-105'
+              ? 'border-zinc-800 bg-zinc-900 text-zinc-400'
+              : 'border-indigo-500/20 bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-md shadow-indigo-500/10 hover:scale-102'
           )}
         >
-          {isUser ? <User className="h-4 w-4" /> : <Sparkles className="h-4.5 w-4.5" />}
+          {isUser ? <User className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
         </div>
 
         <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -58,8 +58,8 @@ export function ChatMessage({ message, index }: { message: any; index: number })
           <div className={cn('flex items-center gap-2.5 px-1', isUser ? 'flex-row-reverse' : 'flex-row')}>
             <span
               className={cn(
-                'text-[10px] font-extrabold uppercase tracking-widest',
-                isUser ? 'text-zinc-500' : 'text-rose-400 font-bold'
+                'text-[10px] font-bold uppercase tracking-wider',
+                isUser ? 'text-zinc-500' : 'text-indigo-400'
               )}
             >
               {isUser ? 'You' : 'Nexus Agent'}
@@ -70,16 +70,16 @@ export function ChatMessage({ message, index }: { message: any; index: number })
           {/* Bubble content */}
           <div
             className={cn(
-              'relative rounded-2xl px-5 py-4 text-[14px] leading-relaxed shadow-xl border transition-all duration-300',
+              'relative rounded-2xl px-5 py-4 text-[14px] leading-relaxed shadow-sm border transition-all duration-200',
               isUser
-                ? 'rounded-tr-none border-white/10 bg-zinc-900/40 text-zinc-100'
-                : 'rounded-tl-none border-white/5 bg-zinc-950/40 text-zinc-200 backdrop-blur-md hover:border-rose-500/10'
+                ? 'rounded-tr-none border-zinc-850 bg-zinc-900/30 text-zinc-100'
+                : 'rounded-tl-none border-zinc-900 bg-zinc-950/45 text-zinc-200 backdrop-blur-md hover:border-indigo-500/10'
             )}
           >
             {!isUser && textContent && (
               <button
                 onClick={handleCopy}
-                className="absolute right-3.5 top-3.5 flex h-7 w-7 items-center justify-center rounded-lg border border-white/5 bg-zinc-900/60 text-zinc-500 opacity-0 transition-all hover:text-zinc-200 hover:border-white/10 group-hover:opacity-100"
+                className="absolute right-3.5 top-3.5 flex h-7 w-7 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900/60 text-zinc-500 opacity-0 transition-all hover:text-zinc-200 hover:border-zinc-700 group-hover:opacity-100 cursor-pointer"
                 title="Copy response"
               >
                 {copied ? (
@@ -99,21 +99,21 @@ export function ChatMessage({ message, index }: { message: any; index: number })
                         {[0, 1, 2].map((dot) => (
                           <span
                             key={dot}
-                            className="h-1.5 w-1.5 rounded-full bg-rose-500"
+                            className="h-1.5 w-1.5 rounded-full bg-indigo-500"
                             style={{
                               animation: `typing-dot 1.2s ease-in-out ${dot * 0.2}s infinite`,
                             }}
                           />
                         ))}
                       </span>
-                      <span className="text-xs font-semibold uppercase tracking-wider">Analyzing Schema...</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Analyzing Schema...</span>
                     </div>
                   );
                 }
 
                 return (
                   <div key={i} className="prose prose-invert max-w-none prose-p:leading-relaxed">
-                    <p className="whitespace-pre-wrap text-[14.5px] text-zinc-300 font-medium">{part.text}</p>
+                    <p className="whitespace-pre-wrap text-[14px] text-zinc-300 font-medium">{part.text}</p>
                   </div>
                 );
               }
@@ -131,14 +131,14 @@ export function ChatMessage({ message, index }: { message: any; index: number })
                   {[0, 1, 2].map((dot) => (
                     <span
                       key={dot}
-                      className="h-1.5 w-1.5 rounded-full bg-rose-500"
+                      className="h-1.5 w-1.5 rounded-full bg-indigo-500"
                       style={{
                         animation: `typing-dot 1.2s ease-in-out ${dot * 0.2}s infinite`,
                       }}
                     />
                   ))}
                 </span>
-                <span className="text-xs font-semibold uppercase tracking-wider">Thinking...</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Thinking...</span>
               </div>
             )}
           </div>

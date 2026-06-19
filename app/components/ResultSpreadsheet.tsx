@@ -53,12 +53,12 @@ export function ResultSpreadsheet({ result }: ResultSpreadsheetProps) {
   if (!result.success) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-8 text-center h-full">
-        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10 text-rose-500">
+        <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-500">
           <AlertCircle className="h-5 w-5" />
         </div>
-        <p className="text-sm font-semibold text-rose-400">Query execution failed</p>
+        <p className="text-sm font-semibold text-red-400">Query execution failed</p>
         <p className="max-w-xs text-xs text-zinc-500 mt-1 leading-relaxed">
-          Inspect the details under the console tab to resolve database syntax issues.
+          Inspect the error details inline within the chat query step to resolve database syntax issues.
         </p>
       </div>
     );
@@ -106,7 +106,7 @@ export function ResultSpreadsheet({ result }: ResultSpreadsheetProps) {
   return (
     <div className="flex flex-1 flex-col overflow-hidden h-full">
       {/* Interactive table tools bar */}
-      <div className="flex items-center justify-between border-b border-white/5 bg-zinc-950/20 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 bg-zinc-950/20 px-4 py-3">
         <div className="flex items-center gap-2">
           <Table className="h-4 w-4 text-emerald-400" />
           <span className="text-xs font-bold uppercase tracking-wider font-sans text-zinc-400">
@@ -120,14 +120,14 @@ export function ResultSpreadsheet({ result }: ResultSpreadsheetProps) {
         <div className="flex items-center gap-1.5">
           <button
             onClick={handleExportCsv}
-            className="flex h-7 items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 transition-all hover:border-emerald-500/20 hover:text-white"
+            className="flex h-7 items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 transition-all hover:border-emerald-500/20 hover:text-white cursor-pointer"
           >
             <Download className="h-3 w-3" />
             <span>CSV</span>
           </button>
           <button
             onClick={handleExportJson}
-            className="flex h-7 items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 transition-all hover:border-emerald-500/20 hover:text-white"
+            className="flex h-7 items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 text-[10px] font-bold uppercase tracking-wider text-zinc-400 transition-all hover:border-emerald-500/20 hover:text-white cursor-pointer"
           >
             <FileJson className="h-3 w-3" />
             <span>JSON</span>

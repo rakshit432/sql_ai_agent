@@ -40,7 +40,7 @@ export function WorkspaceConsole({ logs, onLoadQuery }: WorkspaceConsoleProps) {
       </div>
 
       {/* Main Console Feed */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-3.5">
         {logs.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center py-20 text-center">
             <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-white/5 text-zinc-600">
@@ -60,8 +60,8 @@ export function WorkspaceConsole({ logs, onLoadQuery }: WorkspaceConsoleProps) {
               }`}
             >
               {/* Header log status bar */}
-              <div className="flex items-center justify-between border-b border-white/5 px-3.5 py-2.5 bg-black/10">
-                <div className="flex items-center gap-2 text-[10px] font-bold tracking-wider font-mono">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/5 px-3.5 py-2.5 bg-black/10">
+                <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold tracking-wider font-mono">
                   <span className="text-zinc-500">{log.timestamp}</span>
                   <span>·</span>
                   {log.success ? (
@@ -81,10 +81,10 @@ export function WorkspaceConsole({ logs, onLoadQuery }: WorkspaceConsoleProps) {
                   )}
                 </div>
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     onClick={() => handleCopy(log.query, index)}
-                    className="flex h-6 items-center gap-1 rounded bg-white/5 border border-white/5 px-2 text-[9px] font-bold uppercase tracking-wider text-zinc-400 transition-colors hover:text-white hover:border-white/10"
+                    className="flex h-6 items-center gap-1 rounded bg-white/5 border border-white/5 px-2 text-[9px] font-bold uppercase tracking-wider text-zinc-400 transition-colors hover:text-white hover:border-white/10 cursor-pointer"
                     title="Copy query code"
                   >
                     {copiedIndex === index ? (
@@ -101,7 +101,7 @@ export function WorkspaceConsole({ logs, onLoadQuery }: WorkspaceConsoleProps) {
                   </button>
                   <button
                     onClick={() => onLoadQuery(log.query)}
-                    className="flex h-6 items-center gap-1 rounded bg-rose-500/10 border border-rose-500/15 px-2 text-[9px] font-bold uppercase tracking-wider text-rose-400 transition-all hover:bg-rose-500 hover:text-white active:scale-95"
+                    className="flex h-6 items-center gap-1 rounded bg-rose-500/10 border border-rose-500/15 px-2 text-[9px] font-bold uppercase tracking-wider text-rose-400 transition-all hover:bg-rose-500 hover:text-white active:scale-95 cursor-pointer"
                     title="Load into chat editor"
                   >
                     <Play className="h-2.5 w-2.5 fill-current" />
@@ -112,7 +112,7 @@ export function WorkspaceConsole({ logs, onLoadQuery }: WorkspaceConsoleProps) {
 
               {/* Code display */}
               <div className="p-3 bg-zinc-950/20 font-mono text-[11px] leading-relaxed text-zinc-300 overflow-x-auto">
-                <pre className="text-indigo-300/80">{log.query}</pre>
+                <pre className="text-rose-300/80">{log.query}</pre>
               </div>
 
               {/* Exception details */}
