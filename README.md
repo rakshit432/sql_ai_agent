@@ -211,18 +211,18 @@ Here is a breakdown of the variables required in your `.env.local` file:
 ## 📖 Usage Guide
 
 ```
-[ User Input ] ──> [ AI scans schema ] ──> [ AI executes SELECT query ] ──> [ View spreadsheet & read explanation ]
+[ Input Prompts ] ──> [ Discovery Scan ] ──> [ Interceptor Safety Check ] ──> [ Evidence & Activity logs Output ]
 ```
 
-1. **Select Model:** Open the model selector dropdown in the chat header to choose your preferred LLM.
-2. **Review Database Schema:** Inspect the **Schema Inspector** tab on the workspace dashboard to see tables, column metrics, and relations.
-3. **Ask a Question:** Input a natural language prompt in the input capsule. Examples:
+1. **Configure Model**: Select the core LLM provider from the model dropdown menu in the top status bar.
+2. **Scan Database Panel (Left)**: View the table structure, fields, and descriptions in the collapsible **Database Schema** panel.
+3. **Submit Investigation (Middle)**: Input a database prompt or a SELECT query statement inside the prompt capsule editor. Examples:
    * *"Which region generated the highest sales revenue last quarter?"*
    * *"Show me the products that are low in stock (less than 30 units)."*
    * *"What was John Doe's total purchase amount?"*
-4. **Follow Agent Pipeline:** Watch the step progress loaders in real-time as the agent inspects the structure and executes SQL.
-5. **View Results Grid:** As soon as data returns, the **Explorer Grid** activates, rendering rows in a scrollable spreadsheet. The AI writes an interpretation in the chat panel.
-6. **SQL Logs Console:** Switch to the **SQL Logs** tab to view execution metrics, syntax history, and load query strings back into the input capsule.
+4. **Follow Pipeline Timeline**: Monitor the safety inspector and model steps (`getDatabaseSchema`, `queryDatabase`) run in real-time.
+5. **Analyze Evidence Grid (Right Top)**: Inspect returned query database rows rendered inside the monospace table grid.
+6. **Track Activity Logs (Right Bottom)**: Read executed queries timeline history logs, check syntax parameters, and click **Run** to load past code statements back into the editor capsule.
 
 ---
 
